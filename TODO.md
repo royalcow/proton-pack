@@ -26,7 +26,7 @@
 - Plan accessible charging/status interface.
 
 ## Service Panel — Low Priority
-- Preserve working Nano + OLED prototype.
+- Validate the stored Nano + OLED proof of concept on the physical module.
 - Evaluate larger/color display options.
 - Define eventual I2C integration with main controller.
 

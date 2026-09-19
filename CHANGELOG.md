@@ -15,8 +15,8 @@ Concise cross-session project changes. This is not a replacement for Git history
 
 ### Service Panel
 - OLED identified as 12864-class display.
-- Current I2C selection recorded as 0x78.
-- Arduino Nano prototype is working.
+- Added standalone Nano/SSD1306 proof-of-concept firmware and documentation under `firmware/service-panel/POC/`.
+- Recorded `0x3C` as the POC's 7-bit SSD1306 address and clarified that `0x78` is its 8-bit write-address notation; physical verification remains pending.
 - Larger/color display remains a future option.
 - Service-panel project remains low priority.
 

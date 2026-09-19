@@ -116,12 +116,13 @@ Desired functions:
 - Potential I2C connection to the main controller.
 
 ## Service Panel
-### PLANNED — LOW PRIORITY
+### EXPERIMENTAL — LOW PRIORITY
 Prototype hardware:
 - OLED 12864 display.
 - I2C.
-- Current selected/displayed address: 0x78.
+- POC uses the SSD1306 7-bit address `0x3C` (equivalent to the `0x78` 8-bit write-address notation); verify on the physical module.
 - Arduino Nano used for initial prototype.
+- Standalone proof-of-concept firmware is stored under `firmware/service-panel/POC/`; it is not integrated with the pack controller.
 
 Potential UI:
 - Ghostbusters logo.
@@ -172,6 +173,6 @@ A larger/color display may be considered later.
 | Attenuator | IN PROGRESS |
 | Audio upgrade | PLANNED |
 | Battery/power upgrade | PLANNED |
-| Service panel | PLANNED — LOW PRIORITY |
+| Service panel | EXPERIMENTAL — LOW PRIORITY |
 | Fog system | EXPERIMENTAL |
 | Removable cyclotron | EXPERIMENTAL |

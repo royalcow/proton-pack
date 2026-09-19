@@ -12,7 +12,7 @@ Do not treat unverified values as confirmed wiring.
 
 | Device | Address | Status | Notes |
 |---|---:|---|---|
-| OLED 12864 service-panel prototype | 0x78 | CURRENT SELECTION | Verify whether documentation/code represents 8-bit address notation vs 7-bit library address before final firmware architecture |
+| OLED 12864 service-panel prototype | 0x3C | POC CONFIGURATION — VERIFY | SSD1306 7-bit library address; `0x78` is the equivalent 8-bit write-address notation |
 | Pack-controller INA219 | 0x40 | FIRMWARE DEFAULT | `Adafruit_INA219::begin()` default; absence deliberately holds wand state off |
 
 Bus signals:
