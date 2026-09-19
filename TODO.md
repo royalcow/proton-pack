@@ -12,7 +12,6 @@
 
 ## Wiring / Documentation
 - Physically verify the firmware-documented Arduino pin assignments and connector pin orders.
-- Resolve whether the installed cyclotron chain has two or four 7-pixel Jewels; firmware currently compiles for four while older docs say two.
 - Document HasLab 4-pin JST pinout and signal behavior.
 - Build connector registry.
 - Document power distribution and fuse/charging topology.
