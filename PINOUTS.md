@@ -52,8 +52,8 @@ common ground. Wand negative stays directly on common ground.
 
 | Nano pin | Connection | Mode / notes | Status |
 | --- | --- | --- | --- |
-| D6 | Voltage-check momentary button | `INPUT_PULLUP`; other terminal to GND | CONFIRMED IN FIRMWARE |
-| A0 | Battery divider midpoint | Nominal 100 kΩ battery-to-A0 and 33 kΩ A0-to-GND | FIRMWARE VALUES; installation unverified |
+| D6 | Voltage-check momentary button | `INPUT_PULLUP`; other terminal to GND | FIRMWARE ONLY — not implemented in current hardware |
+| A0 | Battery divider midpoint | Nominal 100 kΩ battery-to-A0 and 33 kΩ A0-to-GND | FIRMWARE ONLY — battery-voltage check not implemented in current hardware |
 | D9 | Audio FX RST | Sound-board reset | CONFIRMED IN FIRMWARE |
 | D10 | Audio FX RX | Nano software-serial TX, 9600 baud | CONFIRMED IN FIRMWARE |
 | D11 | Audio FX TX | Nano software-serial RX, 9600 baud | CONFIRMED IN FIRMWARE |
