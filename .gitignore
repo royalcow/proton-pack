@@ -1,0 +1,39 @@
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Build output
+build/
+dist/
+*.o
+*.elf
+*.hex
+*.bin
+
+# Arduino / PlatformIO
+.pio/
+.pioenvs/
+.piolibdeps/
+
+# Python/tooling
+__pycache__/
+*.pyc
+.venv/
+
+# Secrets/local configuration
+.env
+.env.*
+secrets.*
+credentials.*
+
+# Generated CAD/mesh exports
+# Keep editable/source CAD in Git; generated binary exports can be regenerated.
+*.stl
+*.gcode
+
+# Temporary files
+*.tmp
+*.bak
+*~
