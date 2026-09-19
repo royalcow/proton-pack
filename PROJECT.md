@@ -122,7 +122,7 @@ Prototype hardware:
 - I2C.
 - POC uses the SSD1306 7-bit address `0x3C` (equivalent to the `0x78` 8-bit write-address notation); verify on the physical module.
 - Arduino Nano used for initial prototype.
-- Standalone proof-of-concept firmware is stored under `firmware/service-panel/POC/`; it is not integrated with the pack controller.
+- Standalone proof-of-concept firmware is stored under `firmware/POC/OLED/`; it is not integrated with the pack controller.
 
 Potential UI:
 - Ghostbusters logo.

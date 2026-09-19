@@ -29,13 +29,13 @@ Adafruit BusIO may be installed automatically as a dependency.
 
 ## Build and upload
 
-Open `POC.ino`, select **Arduino Nano** with the
+Open `OLED.ino`, select **Arduino Nano** with the
 **ATmega328P** processor, choose the serial port, and upload. For older Nano
 clones, select **ATmega328P (Old Bootloader)** if the normal upload fails.
 
 ```sh
-arduino-cli compile --fqbn arduino:avr:nano firmware/service-panel/POC
-arduino-cli upload --fqbn arduino:avr:nano --port /dev/cu.YOUR_PORT firmware/service-panel/POC
+arduino-cli compile --fqbn arduino:avr:nano firmware/POC/OLED
+arduino-cli upload --fqbn arduino:avr:nano --port /dev/cu.YOUR_PORT firmware/POC/OLED
 ```
 
 ## Memory
