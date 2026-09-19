@@ -25,11 +25,10 @@ Bus signals:
 | Nano pin | Circuit | Firmware configuration | Status |
 | --- | --- | --- | --- |
 | D2 | Power-cell NeoPixel data | 16 pixels, GRB/800 kHz; pixels 0–14 animated, pixel 15 held off | CONFIRMED IN FIRMWARE; physical connector unverified |
-| D3 | Cyclotron NeoPixel data | Four chained 7-pixel Jewels (28 pixels), GRB/800 kHz | CONFIRMED IN FIRMWARE; conflicts with older two-Jewel build record |
+| D3 | Cyclotron NeoPixel data | Four chained 7-pixel Jewels (28 pixels), GRB/800 kHz | PHYSICALLY VERIFIED — four Jewels installed |
 
 Both chains use 5 V power and common ground. Data connector pin order, power
-injection, protection components, and the physical cyclotron jewel count remain
-to be verified.
+injection, protection components, remain to be verified.
 
 ## Wand
 HasLab wand Activate and Fire signals are connected to the controller, with
