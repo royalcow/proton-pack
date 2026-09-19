@@ -4,9 +4,25 @@ Do not treat unverified values as confirmed wiring.
 
 ## Power Domains
 - Battery: 12 V LiPo
-- 5 V domain: used by NeoPixel lighting and applicable peripherals
-- 3.3 V logic domain: expected for future ESP32 controller
-- Common ground is used across the current pack/controller integration.
+- 5 V domain: used by NeoPixel lighting, SN74AHCT125N VCC, and applicable peripherals
+- 3.3 V logic domain: ESP32-S3 GPIO and internal logic
+- Common ground is required across the pack/controller integration.
+
+## ESP32-S3 migration notes
+
+Development controller: Adafruit ESP32-S3 Reverse TFT Feather #5691.
+
+Exact ESP32 GPIO assignments are **not yet committed**. Preserve the existing Nano signal mapping semantically, but select S3-safe GPIOs after checking the #5691 board pin use (including its integrated TFT).
+
+NeoPixel data translation:
+- SN74AHCT125N VCC -> 5 V
+- SN74AHCT125N GND -> common GND
+- 0.1 uF ceramic decoupling directly across VCC/GND near the IC
+- ESP32 3.3 V GPIO -> AHCT125 A input
+- Corresponding AHCT125 Y output -> series resistor (~330 ohm target) -> NeoPixel DIN
+- Two AHCT125 channels are planned: power-cell data and cyclotron data
+- Used channel /OE pins are held LOW (enabled)
+- Unused channels should be disabled with /OE HIGH and inputs not left floating
 
 ## I2C
 
@@ -20,6 +36,7 @@ Bus signals:
 - SCL
 - Power as appropriate for each device
 - GND
+- STEMMA QT/Qwiic is favored for modular ESP32-S3 peripherals where practical.
 
 ## Lighting
 | Nano pin | Circuit | Firmware configuration | Status |
@@ -27,7 +44,7 @@ Bus signals:
 | D2 | Power-cell NeoPixel data | 16 pixels, GRB/800 kHz; pixels 0–14 animated, pixel 15 held off | PHYSICALLY VERIFIED |
 | D3 | Cyclotron NeoPixel data | Four chained 7-pixel Jewels (28 pixels), GRB/800 kHz | PHYSICALLY VERIFIED — four Jewels installed |
 
-Both chains use 5 V power and common ground. D2 as power-cell data and D3 as cyclotron data are physically verified. Connector pin order, power injection, and protection components remain to be verified.
+Both chains use 5 V power and common ground. During ESP32 migration they remain independent data circuits and will be driven through two SN74AHCT125N channels. Connector pin order, power injection, and final protection components remain to be verified.
 
 ## Wand
 HasLab wand Activate and Fire signals are connected to the controller, with
@@ -45,22 +62,22 @@ pattern. The controls share a 3 ms debounce. Firmware meaning does not establish
 the physical order of these signals on the 4-pin JST.
 
 The INA219 is intended ahead of the wand power switch: VIN+ to buck-converter
-5 V, VIN- to the switch's positive feed, VCC to always-on Nano 5 V, and GND to
-common ground. Wand negative stays directly on common ground.
+5 V, VIN- to the switch's positive feed, VCC to always-on controller supply,
+and GND to common ground. Wand negative stays directly on common ground.
 
 ## Pack-controller auxiliary and audio pins
 
 | Nano pin | Connection | Mode / notes | Status |
 | --- | --- | --- | --- |
 | D6 | Voltage-check momentary button | `INPUT_PULLUP`; other terminal to GND | FIRMWARE ONLY — not implemented in current hardware |
-| A0 | Battery divider midpoint | Nominal 100 kΩ battery-to-A0 and 33 kΩ A0-to-GND | FIRMWARE ONLY — battery-voltage check not implemented in current hardware |
+| A0 | Battery divider midpoint | Nominal 100 kOhm battery-to-A0 and 33 kOhm A0-to-GND | FIRMWARE ONLY — battery-voltage check not implemented in current hardware |
 | D9 | Audio FX RST | Sound-board reset | CONFIRMED IN FIRMWARE |
 | D10 | Audio FX RX | Nano software-serial TX, 9600 baud | CONFIRMED IN FIRMWARE |
 | D11 | Audio FX TX | Nano software-serial RX, 9600 baud | CONFIRMED IN FIRMWARE |
 | D12 | Audio FX ACT | `INPUT_PULLUP`; LOW while playing | CONFIRMED IN FIRMWARE |
 | D13 | Nano built-in LED | Heartbeat output, toggled every 500 ms | CONFIRMED IN FIRMWARE |
 
-Audio FX UG must be tied to GND to select UART mode. Audio FX, Nano, amplifier,
+Audio FX UG must be tied to GND to select UART mode. Audio FX, controller, amplifier,
 wand, sensors, and LED supplies must share ground. Verify the exact Sound Board
 variant's 5 V input requirements before connection.
 

@@ -282,3 +282,20 @@ Still requiring physical verification:
 - Top-level references to a 12 V LiPo and buck converter are compatible with
   the sketch, but only the 5 V wand feed, common ground, and optional battery
   divider are visible to firmware.
+
+
+## ESP32-S3 migration plan
+
+Development hardware selected on 2026-09-19:
+
+- Adafruit ESP32-S3 Reverse TFT Feather #5691 for prototyping/development.
+- SN74AHCT125N powered from 5 V for 3.3 V -> 5 V NeoPixel data translation.
+- Two independent level-shifted NeoPixel outputs: power cell and cyclotron.
+- 0.1 uF ceramic decoupling at the AHCT125; series data resistors targeted around 330 ohms.
+- Existing 5 V NeoPixel power distribution remains separate from data-level translation.
+
+Migration should first reproduce the Nano's five-state behavior before adding new functionality. The S3 implementation should favor event-driven FreeRTOS tasks so critical input/state handling is isolated from lighting, audio, I2C, telemetry, Wi-Fi, and OTA work. Core affinity and task priorities should be chosen from measurement rather than assumed prematurely.
+
+The #5691 integrated TFT is available for development diagnostics (state, wand inputs, lighting state, I2C status, battery telemetry, Wi-Fi/OTA). Final firmware must not require the TFT so a standard ESP32-S3 Feather can be substituted later.
+
+Exact ESP32-S3 GPIO assignments remain open until the #5691 reserved/on-board pins are reviewed. Do not copy Nano pin numbers directly.
