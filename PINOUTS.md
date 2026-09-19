@@ -36,8 +36,8 @@ wire colors, and signal voltage levels are not yet verified.
 
 | Nano pin | Signal | Input mode | Firmware behavior |
 | --- | --- | --- | --- |
-| D4 | Activate control | `INPUT`; external pull-down required | Active-low at read layer; interpreted jointly with D5 |
-| D5 | Fire control | `INPUT`; external pull-down required | Active-low at read layer; interpreted jointly with D4 |
+| D4 | Activate control | `INPUT`; external pull-down required | PHYSICALLY VERIFIED; active-low at read layer; interpreted jointly with D5 |
+| D5 | Fire control | `INPUT`; external pull-down required | PHYSICALLY VERIFIED; active-low at read layer; interpreted jointly with D4 |
 
 With INA219 current confirming wand power, LOW/LOW arms the controls, HIGH/LOW
 activates the pack, and HIGH/HIGH requests Fire. LOW/HIGH is not a valid active
