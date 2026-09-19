@@ -70,7 +70,7 @@ Document every assigned I2C address in PINOUTS.md. Do not assume an address with
 ## Lighting
 ### CURRENT
 - A 16-pixel power-cell NeoPixel chain is configured; pixels 0–14 animate and pixel 15 is held off.
-- Cyclotron firmware is configured for four 7-pixel NeoPixel Jewels (28 pixels), while older build records say two Jewels are installed. Physical count requires verification.
+- Cyclotron uses four physically verified 7-pixel NeoPixel Jewels (28 pixels), matching the current firmware configuration.
 - LED power is 5 V.
 
 ### PLANNED
