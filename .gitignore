@@ -28,12 +28,14 @@ __pycache__/
 secrets.*
 credentials.*
 
-# Generated CAD/mesh exports
-# Keep editable/source CAD in Git; generated binary exports can be regenerated.
-*.stl
+# 3D model assets
+# STL/3MF/STEP files are intentionally tracked (prefer Git LFS).
+# Ignore slicer output and temporary/generated working files.
 *.gcode
+*.bgcode
 
 # Temporary files
 *.tmp
 *.bak
+*.autosave
 *~
