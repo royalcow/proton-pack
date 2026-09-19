@@ -1,5 +1,8 @@
 # SpiritMinimal: Activate + Fire, sound-ready copy
 
+For a code-level description of pins, I/O, timing, global state, hardware
+assumptions, and every state transition, see [ARCHITECTURE.md](ARCHITECTURE.md).
+
 This sketch adds Adafruit Audio FX Sound Board support using the same serial-control approach and track naming as the original Neutrino Wand sketch.
 
 | Input state | Result |
@@ -98,7 +101,12 @@ For the included 100 kΩ / 33 kΩ divider:
 
 Update `VOLTAGE_DIVIDER_R1`, `VOLTAGE_DIVIDER_R2`, `ADC_REFERENCE_VOLTS`, and `VOLTAGE_CALIBRATION` to match the installed hardware and a trusted multimeter reading.
 
-The sketch is currently configured for two connected 7-pixel NeoPixel jewels (14 pixels total): jewel 1 is pixels 0–6 and jewel 2 is 7–13. After adding the other two jewels, change `CYCLOTRON_JEWEL_COUNT` to `4`; jewels 3 and 4 will then be pixels 14–20 and 21–27.
+The sketch is currently compiled for four 7-pixel NeoPixel jewels (28 pixels
+total): jewel 1 is pixels 0–6, jewel 2 is 7–13, jewel 3 is 14–20, and jewel 4
+is 21–27. Older top-level project documentation says two jewels are installed,
+so verify the physical chain before relying on this configuration. If only two
+jewels are connected, change `CYCLOTRON_JEWEL_COUNT` to `2` only as a deliberate
+firmware change after that hardware check.
 
 ## Upload
 

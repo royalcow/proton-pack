@@ -11,7 +11,8 @@
 - Migrate controller architecture from Nano when ready.
 
 ## Wiring / Documentation
-- Capture verified current Arduino pin assignments.
+- Physically verify the firmware-documented Arduino pin assignments and connector pin orders.
+- Resolve whether the installed cyclotron chain has two or four 7-pixel Jewels; firmware currently compiles for four while older docs say two.
 - Document HasLab 4-pin JST pinout and signal behavior.
 - Build connector registry.
 - Document power distribution and fuse/charging topology.
@@ -22,7 +23,7 @@
 
 ## Battery
 - Define battery upgrade path.
-- Add voltage-monitoring circuit.
+- Verify/install and calibrate the firmware's 100 kΩ / 33 kΩ voltage-monitoring divider.
 - Plan accessible charging/status interface.
 
 ## Service Panel — Low Priority

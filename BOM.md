@@ -7,7 +7,7 @@ This file tracks hardware actually owned/installed separately from parts that ar
 | Subsystem | Item | Status | Notes |
 |---|---|---|---|
 | Controller | Arduino Nano | CURRENT | Used for current prototypes/control |
-| Lighting | NeoPixel Jewel, 7-pixel | CURRENT | Two circuits |
+| Lighting | NeoPixel Jewel, 7-pixel | CURRENT | Two circuits recorded as installed; pack-controller firmware currently configures four, so verify physical count |
 | Power | 12 V LiPo battery | CURRENT | Existing pack battery |
 | Power | Buck converter | CURRENT | Existing |
 | Audio | CH358D amplifier | CURRENT | Existing audio hardware |

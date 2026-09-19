@@ -28,7 +28,8 @@ Use these labels where useful: CURRENT, PLANNED, EXPERIMENTAL, DEPRECATED.
 ## Controller
 ### CURRENT
 - Arduino Nano used for current/prototype control.
-- Two NeoPixel Jewel circuits, 7 LEDs each.
+- Working pack-controller sketch is documented under `firmware/pack-controller/`.
+- Firmware uses current-qualified, debounced HasLab wand controls and a five-state pack state machine.
 - Common-ground power distribution.
 
 ### PLANNED
@@ -68,8 +69,8 @@ Document every assigned I2C address in PINOUTS.md. Do not assume an address with
 
 ## Lighting
 ### CURRENT
-- Two NeoPixel Jewel circuits.
-- Seven pixels per Jewel.
+- A 16-pixel power-cell NeoPixel chain is configured; pixels 0–14 animate and pixel 15 is held off.
+- Cyclotron firmware is configured for four 7-pixel NeoPixel Jewels (28 pixels), while older build records say two Jewels are installed. Physical count requires verification.
 - LED power is 5 V.
 
 ### PLANNED
@@ -79,6 +80,7 @@ Document every assigned I2C address in PINOUTS.md. Do not assume an address with
 ### CURRENT
 - CH358D amplifier module.
 - Existing pack speaker.
+- Current firmware controls an Adafruit Audio FX Sound Board over 9600-baud software serial and uses five event tracks (`T00.WAV`–`T04.WAV`). Confirm the installed board model and amplifier interconnect on the hardware.
 
 ### PLANNED
 Explore an upgraded audio subsystem supporting:
@@ -94,9 +96,10 @@ Explore an upgraded audio subsystem supporting:
 - 12 V LiPo battery.
 - Buck converter.
 - Central power distribution/common ground.
+- Firmware supports an INA219 at address `0x40` for wand-current qualification and an on-demand 100 kΩ / 33 kΩ battery-divider measurement on A0. Installed values and calibration require physical verification.
 
 ### PLANNED
-- Battery voltage monitoring.
+- Calibrate and integrate battery voltage monitoring into pack status/indication.
 - Better charging/service access.
 - Battery status indication.
 - Improved modular power distribution/connectors.
@@ -165,6 +168,7 @@ A larger/color display may be considered later.
 | HasLab wand | CURRENT |
 | Printed wand | IN PROGRESS |
 | NeoPixel lighting | CURRENT |
+| Pack-controller firmware documentation | CURRENT |
 | Attenuator | IN PROGRESS |
 | Audio upgrade | PLANNED |
 | Battery/power upgrade | PLANNED |
