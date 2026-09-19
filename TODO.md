@@ -1,35 +1,21 @@
-# Project TODO
+# Proton Pack TODO
 
-## In Progress
-- Finish attenuator hardware build as ordered parts arrive.
-- Continue printed-wand build.
+> **Deprecated:** Active project work is now tracked with GitHub Issues.
 
-## Controller
-- Select exact ESP32 board.
-- Define 3.3 V / 5 V level-shifting strategy.
-- Define internal I2C physical wiring/connectors.
-- Migrate controller architecture from Nano when ready.
+## Active work
 
-## Wiring / Documentation
-- Physically verify the firmware-documented Arduino pin assignments and connector pin orders.
-- Document HasLab 4-pin JST pinout and signal behavior.
-- Build connector registry.
-- Document power distribution and fuse/charging topology.
+See the repository issue tracker:
 
-## Audio
-- Evaluate upgraded polyphonic/cross-fade audio hardware.
-- Define attenuator-to-audio control interface.
+https://github.com/royalcow/proton-pack/issues
 
-## Battery
-- Define battery upgrade path.
-- Verify/install and calibrate the firmware's 100 kΩ / 33 kΩ voltage-monitoring divider.
-- Plan accessible charging/status interface.
+Do not add new tasks to this file. Create or update a GitHub Issue instead.
 
-## Service Panel — Low Priority
-- Validate the stored Nano + OLED proof of concept on the physical module.
-- Evaluate larger/color display options.
-- Define eventual I2C integration with main controller.
+## Project documentation
 
-## Future / Experimental
-- N-filter fog integration.
-- Removable cyclotron architecture.
+- `PROJECT.md` — current project state and architecture
+- `DECISIONS.md` — architectural decisions
+- `PINOUTS.md` — as-built wiring and hardware verification
+- GitHub Issues — planned and active work
+- `CHANGELOG.md` — project changes
+
+This file is retained temporarily as a stable entry point for existing references and tooling and may be removed once those references have migrated to GitHub Issues.
