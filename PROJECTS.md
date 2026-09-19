@@ -2,12 +2,12 @@
 
 This file is the high-level tracker for planned and active upgrades to the Proton Pack. Detailed design, firmware, wiring, sourcing, and build notes can live in their respective project areas.
 
-_Last updated: 2026-09-18_
+_Last updated: 2026-09-19_
 
 | # | Project / Upgrade | Status | Current direction |
 |---|---|---|---|
 | 1 | Attenuator | In progress | Base shell printed; parts on order. Functional volume control, Ghostbusters theme control, LEDs, and possible future I2C integration. |
-| 2 | Controller / ESP32-S3 | Planning | Migrate from Arduino Nano to ESP32-S3. OTA firmware updates, Wi-Fi/BLE, more I/O, and an internal I2C/accessory bus. |
+| 2 | Controller / ESP32-S3 | In progress — parts ordered | Adafruit ESP32-S3 Reverse TFT Feather #5691 ordered for development; SN74AHCT125N level shifters, DIP sockets, and 0.1 uF decoupling capacitors ordered. Prototype two independent 5 V NeoPixel data circuits through AHCT125, then migrate Nano behavior incrementally. |
 | 3 | Printed Wand | In progress | New wand is being printed. Continue using the HasLab Spengler wand in the near term while keeping the pack ready for migration to the printed wand. |
 | 4 | Battery | Planning | Replace/update the current 12 V battery with higher capacity/current headroom, integrated protection/BMS, and pack-side voltage telemetry. |
 | 5 | Audio subsystem | Exploring | Replace/refactor the current CH358D setup. Investigating polyphonic playback, crossfading, simultaneous effects, and independent music/effects control. |
@@ -19,6 +19,8 @@ _Last updated: 2026-09-18_
 ## Architecture direction
 
 The current long-term direction is toward an ESP32-S3 main controller with modular power distribution and an internal accessory bus. Candidate smart peripherals include the attenuator, service panel, battery telemetry, audio controls, sensors, and future wand/PKE integrations.
+
+Controller development uses the Adafruit ESP32-S3 Reverse TFT Feather #5691. The TFT is intended as a development/status aid; a standard ESP32-S3 Feather can replace it in the final pack without changing the overall architecture.
 
 The current HasLab wand should remain supported while the printed wand is developed.
 
