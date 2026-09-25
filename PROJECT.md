@@ -106,14 +106,16 @@ Explore an upgraded audio subsystem supporting:
 
 ## Attenuator
 ### IN PROGRESS
-- Base shell printed.
-- Additional parts ordered.
+- GPStar-based shell and mounting revision V2 are being developed; physical fit tests have calibrated the exterior radiation lens, captive NeoPixel holder and lower dome flange mounts.
+- Separate Arduino Nano will own its encoder, switches, LEDs and yellow BL28Z/HT16K33 bargraph; electronics and final wiring are in progress.
+- Shared pack-facing I2C is PLANNED, not yet electrically validated; the Nano would control its local HT16K33 independently.
+- Lighting behavior is specified for future Codex implementation in [`firmware/attenuator/LIGHTING_SPEC.md`](firmware/attenuator/LIGHTING_SPEC.md); see [`firmware/attenuator/README.md`](firmware/attenuator/README.md) for architecture and outstanding hardware questions.
 
 Desired functions:
-- Volume control.
-- Switch/button capable of triggering the Ghostbusters theme.
+- Volume encoder and mute button.
+- Flat-paddle switch for Ghostbusters theme and one reserved switch.
 - Integration with the future audio subsystem.
-- Potential I2C connection to the main controller.
+- Removable pack cable/connectors.
 
 ## Service Panel
 ### EXPERIMENTAL — LOW PRIORITY
