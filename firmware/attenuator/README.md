@@ -2,7 +2,12 @@
 
 The attenuator is a self-contained Arduino Nano peripheral for the proton pack. It reads its own encoder, encoder pushbutton and toggle switches and drives its own indicator NeoPixels and 28-segment yellow bargraph. The main pack controller owns authoritative pack/audio state; the attenuator translates that state into local display and lighting effects.
 
-**Codex implementation reference:** [LIGHTING_SPEC.md](LIGHTING_SPEC.md) — the agreed V1 behavior of the top status lamp, radiation lens and lower warning dome. This is a behavioral specification, not implemented firmware.
+**Codex implementation references:**
+
+- [CONTROLS_SPEC.md](CONTROLS_SPEC.md) — V1 encoder, push-to-mute, theme play/stop toggle, manual vent/purge toggle, event semantics, startup safety and acceptance tests.
+- [LIGHTING_SPEC.md](LIGHTING_SPEC.md) — V1 top connection lamp, radiation lens and simulated-warning lower dome, including vent/overheat effects.
+
+Both are planned behavioral specifications, not implemented firmware.
 
 ## Proposed integration
 
