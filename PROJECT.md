@@ -109,11 +109,11 @@ Explore an upgraded audio subsystem supporting:
 - GPStar-based shell and mounting revision V2 are being developed; physical fit tests have calibrated the exterior radiation lens, captive NeoPixel holder and lower dome flange mounts.
 - Separate Arduino Nano will own its encoder, switches, LEDs and yellow BL28Z/HT16K33 bargraph; electronics and final wiring are in progress.
 - Shared pack-facing I2C is PLANNED, not yet electrically validated; the Nano would control its local HT16K33 independently.
-- Lighting behavior is specified for future Codex implementation in [`firmware/attenuator/LIGHTING_SPEC.md`](firmware/attenuator/LIGHTING_SPEC.md); see [`firmware/attenuator/README.md`](firmware/attenuator/README.md) for architecture and outstanding hardware questions.
+- Planned control behavior is specified in [`firmware/attenuator/CONTROLS_SPEC.md`](firmware/attenuator/CONTROLS_SPEC.md); lighting behavior in [`firmware/attenuator/LIGHTING_SPEC.md`](firmware/attenuator/LIGHTING_SPEC.md). See [`firmware/attenuator/README.md`](firmware/attenuator/README.md) for architecture and outstanding hardware questions.
 
 Desired functions:
 - Volume encoder and mute button.
-- Flat-paddle switch for Ghostbusters theme and one reserved switch.
+- Flat-paddle toggle 1: Ghostbusters theme play/stop; flat-paddle toggle 2: manual vent/purge (one request per OFF-to-ON transition, rearmed by OFF, no auto-trigger at boot/reconnect).
 - Integration with the future audio subsystem.
 - Removable pack cable/connectors.
 
