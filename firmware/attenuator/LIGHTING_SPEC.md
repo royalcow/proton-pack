@@ -2,7 +2,7 @@
 
 **Status:** PLANNED behavioral specification, agreed 2026-09-25; not implemented or hardware-validated.  
 **Owner:** Attenuator Arduino Nano. **Source of pack state:** main pack controller (future ESP32).  
-**Scope:** Top status light, radiation lens and lower Carclo dome only. The yellow BL28Z bargraph, audio and physical controls are related but specified separately.
+**Scope:** Top status light, radiation lens and lower Carclo dome only. The yellow BL28Z bargraph, audio and physical controls are related but specified separately in [CONTROLS_SPEC.md](CONTROLS_SPEC.md). The second physical toggle requests a **manual vent/purge**; only the main pack can accept it and report VENTING/RECOVERY to drive these effects.
 
 ## Design intent and responsibilities
 
