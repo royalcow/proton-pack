@@ -17,3 +17,10 @@ Use I2C where practical for low-bandwidth internal peripherals. Exact topology, 
 - Lower dome is reserved for **fictional** thermal/overheat/vent indications rather than generic real hardware diagnostics.
 - The local Nano owns animation timing and rendering; the pack supplies high-level state. Specification: [`firmware/attenuator/LIGHTING_SPEC.md`](firmware/attenuator/LIGHTING_SPEC.md).
 - Pack-facing shared I2C and local software I2C remain implementation proposals requiring electrical/timing validation, not confirmed wiring.
+
+## 2026-09-25 — Attenuator V1 Control Assignments (PLANNED)
+- Rotary encoder adjusts authoritative pack master volume; encoder push requests mute/unmute.
+- Flat-paddle toggle 1 requests Ghostbusters theme play on OFF -> ON and stop on ON -> OFF. Track ending while still ON does not auto-replay.
+- Flat-paddle toggle 2 requests manual vent/purge once on OFF -> ON; OFF rearms and does not abort an active vent. Staying ON does not repeat.
+- At boot/reconnection, both latching switch positions are sampled without creating synthetic play/vent requests. Main pack owns audio and pack-wide vent state; the Nano handles local display effects after state confirmation.
+- Details and acceptance scenarios: [`firmware/attenuator/CONTROLS_SPEC.md`](firmware/attenuator/CONTROLS_SPEC.md). Wire protocol and timings remain open.
