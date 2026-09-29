@@ -39,3 +39,10 @@ Concise cross-session project changes. This is not a replacement for Git history
 ### Architecture
 - ESP32 migration remains planned.
 - Internal I2C bus remains the preferred direction for suitable peripherals.
+
+## 2026-09-25
+
+### Attenuator lighting specification
+- Added `firmware/attenuator/LIGHTING_SPEC.md` as a Codex-ready V1 behavioral specification: top power/connection indicator, yellow-to-red radiation activity, fictional lower-dome heat/vent/overheat effects, full state table, priority rules, proposed data fields and acceptance scenarios.
+- Added `firmware/attenuator/README.md` documenting hardware ownership and unvalidated communication assumptions.
+- Added `firmware/attenuator/CONTROLS_SPEC.md`: V1 rotary master-volume control, encoder push-to-mute, theme play/stop toggle and one-shot manual vent/purge toggle. Defined latching switch edge/level behavior, boot/reconnection suppression, pack-owned actions and Codex acceptance scenarios.

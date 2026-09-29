@@ -11,5 +11,19 @@ The HasLab Spengler Wand remains supported in the near term while the printed wa
 ## 2026-09-18 — Internal I2C Direction
 Use I2C where practical for low-bandwidth internal peripherals. Exact topology, connectors, and device addresses remain subject to implementation and testing.
 
+## 2026-09-25 — Attenuator Lighting Roles (PLANNED)
+- Top LED indicates accessory power and live connection to the main pack controller: green connected, amber pulse waiting/disconnected, off unpowered.
+- Radiation lens indicates pack operating state using yellow-to-orange-to-red effects, with brightness/activity scaling by power and simulated heat.
+- Lower dome is reserved for **fictional** thermal/overheat/vent indications rather than generic real hardware diagnostics.
+- The local Nano owns animation timing and rendering; the pack supplies high-level state. Specification: [`firmware/attenuator/LIGHTING_SPEC.md`](firmware/attenuator/LIGHTING_SPEC.md).
+- Pack-facing shared I2C and local software I2C remain implementation proposals requiring electrical/timing validation, not confirmed wiring.
+
+## 2026-09-25 — Attenuator V1 Control Assignments (PLANNED)
+- Rotary encoder adjusts authoritative pack master volume; encoder push requests mute/unmute.
+- Flat-paddle toggle 1 requests Ghostbusters theme play on OFF -> ON and stop on ON -> OFF. Track ending while still ON does not auto-replay.
+- Flat-paddle toggle 2 requests manual vent/purge once on OFF -> ON; OFF rearms and does not abort an active vent. Staying ON does not repeat.
+- At boot/reconnection, both latching switch positions are sampled without creating synthetic play/vent requests. Main pack owns audio and pack-wide vent state; the Nano handles local display effects after state confirmation.
+- Details and acceptance scenarios: [`firmware/attenuator/CONTROLS_SPEC.md`](firmware/attenuator/CONTROLS_SPEC.md). Wire protocol and timings remain open.
+
 ## 2026-09-28 — Standalone Attenuator Display Bring-up
 Use Nano hardware I2C on A4/A5 for the isolated HT16K33/BL28Z POC. Keep the raw display driver separate from test logic and determine physical order by discovery. This does not decide the future local software-I2C bus or implement the complete attenuator.
