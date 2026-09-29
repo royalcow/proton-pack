@@ -5,6 +5,7 @@ The attenuator is a self-contained Arduino Nano peripheral for the proton pack. 
 **Codex implementation references:**
 
 - [CONTROLS_SPEC.md](CONTROLS_SPEC.md) — V1 encoder, push-to-mute, theme play/stop toggle, manual vent/purge toggle, event semantics, startup safety and acceptance tests.
+- [BARGRAPH_SPEC.md](BARGRAPH_SPEC.md) — V1 confirmed-volume display and two-adjacent-segment breathing mute marker using the verified BL28Z mapping.
 - [LIGHTING_SPEC.md](LIGHTING_SPEC.md) — V1 top connection lamp, radiation lens and simulated-warning lower dome, including vent/overheat effects.
 
 Both are planned behavioral specifications, not implemented firmware.
