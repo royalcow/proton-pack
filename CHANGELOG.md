@@ -2,6 +2,14 @@
 
 Concise cross-session project changes. This is not a replacement for Git history.
 
+## 2026-09-28
+
+- Added standalone Nano BL28Z/HT16K33 bargraph POC with raw driver, mapping discovery, Serial tests, nonblocking animations, and wiring/verification instructions.
+- Nano ATmega328P compilation passed using Arduino AVR Boards 1.8.8 and bundled Wire; this compile predates the manual discovery update. Current host tests pass.
+- Discovery now holds each raw position until Return; CRLF advances once.
+- Applied the user-confirmed COM0–3 cycling map and recorded passing sequence, fill, inversion, animations, brightness adjustment, and discovery checks; remaining checks are tracked in VERIFIED_MAPPING.md.
+- Requested attenuator README and CONTROLS_SPEC.md were absent from this checkout; followed the supplied display-only requirements.
+
 ## 2026-09-18
 
 ### Pack Controller Firmware

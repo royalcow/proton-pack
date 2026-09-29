@@ -24,3 +24,7 @@ This file tracks hardware actually owned/installed separately from parts that ar
 | Audio | Tsunami-class audio board | EVALUATING | Polyphonic/cross-fade capability desired |
 
 Add exact manufacturer part numbers, quantities, purchase links, and electrical specs as components are finalized.
+
+## Standalone attenuator display test
+
+Specified POC hardware: yellow BL28Z-3005SA04Y 28-segment display and Adafruit HT16K33 breakout #1427, driven by the 5 V Nano. Basic display operation has been confirmed by the user; wiring documentation and remaining checks are pending; see `firmware/POC/Attenuator_Bargraph/README.md`.

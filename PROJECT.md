@@ -108,6 +108,7 @@ Explore an upgraded audio subsystem supporting:
 ### IN PROGRESS
 - Base shell printed.
 - Additional parts ordered.
+- EXPERIMENTAL: standalone Nano/HT16K33/BL28Z display test in `firmware/POC/Attenuator_Bargraph/`; host tests passed; user confirmed physical sequence and basic display commands, with remaining hardware checks documented. Uses local hardware I2C on A4/A5 for this POC only.
 
 Desired functions:
 - Volume control.

@@ -13,6 +13,7 @@ Do not treat unverified values as confirmed wiring.
 | Device | Address | Status | Notes |
 |---|---:|---|---|
 | OLED 12864 service-panel prototype | 0x3C | POC CONFIGURATION — VERIFY | SSD1306 7-bit library address; `0x78` is the equivalent 8-bit write-address notation |
+| Attenuator bargraph POC HT16K33 #1427 | 0x70 | ASSUMED — SCAN TO VERIFY | Standalone Nano A4 SDA / A5 SCL, 5 V VDD and common GND; [display wiring and A0/A2 correction](firmware/POC/Attenuator_Bargraph/README.md) |
 | Pack-controller INA219 | 0x40 | FIRMWARE DEFAULT | `Adafruit_INA219::begin()` default; absence deliberately holds wand state off |
 
 Bus signals:
