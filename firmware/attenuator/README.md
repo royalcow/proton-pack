@@ -246,3 +246,24 @@ a future integration can call its setters with confirmed master state.
 at brightness zero. The sketch handles Serial, diagnostics, and temporary vent
 priority. `SegmentMap.h` and its verified lookup table are unchanged.
 Behavior reference: [BARGRAPH_SPEC.md](BARGRAPH_SPEC.md).
+
+## Full attenuator integration (planned)
+
+This standalone sketch implements the bargraph behavior using simulated Serial
+state. Encoder, switches, NeoPixels, authoritative pack state, and pack communication
+remain planned. Integration references:
+
+- [CONTROLS_SPEC.md](CONTROLS_SPEC.md) — encoder, mute, theme and vent controls.
+- [BARGRAPH_SPEC.md](BARGRAPH_SPEC.md) — V1 bargraph behavior implemented here; hardware acceptance pending.
+- [LIGHTING_SPEC.md](LIGHTING_SPEC.md) — connection lamp, radiation lens and lower dome.
+
+## Proposed integration
+
+- Pack-facing link: Nano as an I2C peripheral on the planned shared pack bus; ESP32 is the master and polls inputs/sends state.
+- The Nano must control its own outputs, not rely on the ESP32 to stream LED frames or drive bargraph segments.
+- Local HT16K33 driver beside the BL28Z bargraph; a **separate local software I2C bus** is proposed if the Nano hardware I2C interface is used in peripheral mode. Verify library compatibility and timing experimentally.
+- Physical packaging: Nano and power/distribution on the removable base plate; bargraph/driver near the shell window; detachable internal harnesses.
+- Current HasLab wand remains supported. The eventual printed wand may reuse the same *pattern*, subject to bus and timing validation.
+- The proposed 5-pin GX12 loom assigns 5V, GND, SDA, SCL and one spare. **Pin numbering, voltage interface, address and bus pull-ups are not finalized**; do not connect the 5 V Nano I2C interface directly to 3.3 V ESP32 lines without confirming level shifting.
+
+See the top-level [PROJECT.md](../../PROJECT.md) and [PINOUTS.md](../../PINOUTS.md) for the current-versus-planned distinction and verified wiring. Do not reuse the current main pack Nano pin map as the attenuator Nano pin map.
