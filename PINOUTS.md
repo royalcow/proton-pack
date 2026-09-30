@@ -41,7 +41,7 @@ The dedicated attenuator Nano uses the rotary encoder for master-volume input an
 | D4 | Encoder pushbutton signal | `INPUT_PULLUP` | PHYSICALLY WIRED |
 | GND | Rotary center/common plus the other pushbutton terminal | Ground | PHYSICALLY WIRED; shared locally at encoder |
 
-The current soldered harness uses a **four-wire pigtail with a local ground jumper** between the rotary common and one pushbutton terminal, so only one ground conductor leaves the encoder. In the 2026-09-30 build photo, the two rotary outer contacts use purple and white leads, while the switch side uses yellow and black; the exact color-to-D2/D3/D4/GND continuity has not yet been meter-verified, so pin function is authoritative and wire color is only a build aid for now.
+The 2026-09-30 build photo confirms the encoder harness has been soldered and shows four insulated conductors (purple, white, yellow, and black). The photo alone does **not** establish the final color-to-D2/D3/D4/GND mapping or whether the rotary common and button ground are locally tied; verify those with continuity before documenting color as authoritative. The functional pin assignment above remains the intended wiring.
 
 If clockwise rotation produces the wrong sign, swap the A/B interpretation in firmware (or D2/D3 physically); do not change the common-ground/button wiring.
 
