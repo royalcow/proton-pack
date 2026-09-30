@@ -87,7 +87,7 @@ The attenuator encoder is now physically soldered. Use Nano internal pull-ups; t
 | D4 | Integrated pushbutton signal |
 | GND | Rotary center/common and the other pushbutton terminal |
 
-The current assembly uses a **four-wire harness** because the rotary common is locally jumpered to one pushbutton terminal at the encoder. The 2026-09-30 build photo shows purple and white on the rotary outer contacts and yellow/black on the switch side. Exact color-to-Nano continuity has not yet been meter-verified, so follow the functional pin table above rather than relying on color alone.
+The 2026-09-30 build photo confirms the encoder harness has been soldered and shows four insulated conductors (purple, white, yellow, and black). The photo by itself does **not** prove the final color-to-D2/D3/D4/GND continuity or whether common/button ground are locally joined. Verify continuity before treating wire color as authoritative; use the functional pin table above as the intended wiring.
 
 Configure D2, D3 and D4 as `INPUT_PULLUP`. Rotation and button closures are therefore active-low contact events. If clockwise is decoded backwards, reverse A/B in firmware or swap D2/D3; leave the shared ground unchanged.
 
