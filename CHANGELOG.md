@@ -2,6 +2,11 @@
 
 Concise cross-session project changes. This is not a replacement for Git history.
 
+## 2026-09-30
+
+- Attenuator rotary encoder harness physically soldered. Intended Nano wiring remains D2/D3 for encoder phases, D4 for the integrated pushbutton, and shared ground returns with `INPUT_PULLUP` inputs.
+- Build photo records purple, white, yellow, and black conductors; exact color-to-signal continuity and clockwise direction remain to be verified before wire colors are treated as authoritative.
+
 ## 2026-09-28
 
 - Added standalone Nano BL28Z/HT16K33 bargraph POC with raw driver, mapping discovery, Serial tests, nonblocking animations, and wiring/verification instructions.
