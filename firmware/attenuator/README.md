@@ -76,6 +76,21 @@ Nano A4/A5 and HT output A4/A5 are different connections. Unused HT outputs
 remain unconnected. Keep this POC on a standalone hardware-I2C bus. It does
 not implement a Nano slave, ESP32 link, software I2C, or other attenuator I/O.
 
+### Rotary encoder wiring
+
+The attenuator encoder is now physically soldered. Use Nano internal pull-ups; the encoder itself does not receive 5 V.
+
+| Nano | Encoder |
+|---|---|
+| D2 | Rotary phase A / outer contact |
+| D3 | Rotary phase B / opposite outer contact |
+| D4 | Integrated pushbutton signal |
+| GND | Rotary center/common and the other pushbutton terminal |
+
+The current assembly uses a **four-wire harness** because the rotary common is locally jumpered to one pushbutton terminal at the encoder. The 2026-09-30 build photo shows purple and white on the rotary outer contacts and yellow/black on the switch side. Exact color-to-Nano continuity has not yet been meter-verified, so follow the functional pin table above rather than relying on color alone.
+
+Configure D2, D3 and D4 as `INPUT_PULLUP`. Rotation and button closures are therefore active-low contact events. If clockwise is decoded backwards, reverse A/B in firmware or swap D2/D3; leave the shared ground unchanged.
+
 ### A0/A2 silkscreen correction
 
 Adafruit's [support discussion of #1427](https://forums.adafruit.com/viewtopic.php?t=210123)
@@ -250,8 +265,9 @@ Behavior reference: [BARGRAPH_SPEC.md](BARGRAPH_SPEC.md).
 ## Full attenuator integration (planned)
 
 This standalone sketch implements the bargraph behavior using simulated Serial
-state. Encoder, switches, NeoPixels, authoritative pack state, and pack communication
-remain planned. Integration references:
+state. The encoder is now physically wired (D2/D3 rotation, D4 pushbutton, shared
+GND) but is not yet integrated into this sketch. The paddle switches, NeoPixels,
+authoritative pack state, and pack communication remain planned. Integration references:
 
 - [CONTROLS_SPEC.md](CONTROLS_SPEC.md) — encoder, mute, theme and vent controls.
 - [BARGRAPH_SPEC.md](BARGRAPH_SPEC.md) — V1 bargraph behavior implemented here; hardware acceptance pending.
