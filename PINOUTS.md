@@ -30,6 +30,21 @@ Bus signals:
 
 Both chains use 5 V power and common ground. D2 as power-cell data and D3 as cyclotron data are physically verified. Connector pin order, power injection, and protection components remain to be verified.
 
+## Attenuator controls
+
+The dedicated attenuator Nano uses the rotary encoder for master-volume input and its integrated pushbutton for mute. The encoder is a passive contact device and is wired to ground with Nano internal pull-ups; do **not** feed 5 V into the encoder contacts.
+
+| Nano pin | Encoder connection | Input mode | Current build status |
+| --- | --- | --- | --- |
+| D2 | Rotary phase A / one outer rotary contact | `INPUT_PULLUP` | PHYSICALLY WIRED; direction still to verify in firmware |
+| D3 | Rotary phase B / opposite outer rotary contact | `INPUT_PULLUP` | PHYSICALLY WIRED; direction still to verify in firmware |
+| D4 | Encoder pushbutton signal | `INPUT_PULLUP` | PHYSICALLY WIRED |
+| GND | Rotary center/common plus the other pushbutton terminal | Ground | PHYSICALLY WIRED; shared locally at encoder |
+
+The current soldered harness uses a **four-wire pigtail with a local ground jumper** between the rotary common and one pushbutton terminal, so only one ground conductor leaves the encoder. In the 2026-09-30 build photo, the two rotary outer contacts use purple and white leads, while the switch side uses yellow and black; the exact color-to-D2/D3/D4/GND continuity has not yet been meter-verified, so pin function is authoritative and wire color is only a build aid for now.
+
+If clockwise rotation produces the wrong sign, swap the A/B interpretation in firmware (or D2/D3 physically); do not change the common-ground/button wiring.
+
 ## Wand
 HasLab wand Activate and Fire signals are connected to the controller, with
 common ground. A 4-pin JST connection is available, but its physical pin order,
