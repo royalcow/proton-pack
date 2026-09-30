@@ -5,7 +5,7 @@ Concise cross-session project changes. This is not a replacement for Git history
 ## 2026-09-30
 
 - Attenuator rotary encoder harness physically soldered. Intended Nano wiring remains D2/D3 for encoder phases, D4 for the integrated pushbutton, and shared ground returns with `INPUT_PULLUP` inputs.
-- Build photo records purple, white, yellow, and black conductors; exact color-to-signal continuity and clockwise direction remain to be verified before wire colors are treated as authoritative.
+- Encoder harness color map finalized: top-left blue -> D2, top-right white -> D3, bottom-left yellow -> D4 pushbutton, bottom-right black -> GND; top-center rotary common is locally tied to bottom-right GND. Clockwise direction still needs firmware verification.
 
 ## 2026-09-28
 
