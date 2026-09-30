@@ -36,12 +36,12 @@ The dedicated attenuator Nano uses the rotary encoder for master-volume input an
 
 | Nano pin | Encoder connection | Input mode | Current build status |
 | --- | --- | --- | --- |
-| D2 | Rotary phase A / one outer rotary contact | `INPUT_PULLUP` | PHYSICALLY WIRED; direction still to verify in firmware |
-| D3 | Rotary phase B / opposite outer rotary contact | `INPUT_PULLUP` | PHYSICALLY WIRED; direction still to verify in firmware |
-| D4 | Encoder pushbutton signal | `INPUT_PULLUP` | PHYSICALLY WIRED |
-| GND | Rotary center/common plus the other pushbutton terminal | Ground | PHYSICALLY WIRED; shared locally at encoder |
+| D2 | Rotary phase A / top-left outer contact — **blue** | `INPUT_PULLUP` | PHYSICALLY WIRED |
+| D3 | Rotary phase B / top-right outer contact — **white** | `INPUT_PULLUP` | PHYSICALLY WIRED |
+| D4 | Encoder pushbutton signal / bottom-left contact — **yellow** | `INPUT_PULLUP` | PHYSICALLY WIRED |
+| GND | Rotary center/common, locally tied to bottom-right pushbutton return — **black lead exits from bottom-right** | Ground | PHYSICALLY WIRED |
 
-The 2026-09-30 build photo confirms the encoder harness has been soldered and shows four insulated conductors (purple, white, yellow, and black). The photo alone does **not** establish the final color-to-D2/D3/D4/GND mapping or whether the rotary common and button ground are locally tied; verify those with continuity before documenting color as authoritative. The functional pin assignment above remains the intended wiring.
+Physical orientation is recorded looking at the encoder rear exactly as installed in the attenuator: top-left = blue, top-center = rotary common/GND, top-right = white, bottom-left = yellow pushbutton signal, bottom-right = black GND. The top-center common is locally jumpered to the bottom-right switch terminal, so the harness uses one black ground conductor.
 
 If clockwise rotation produces the wrong sign, swap the A/B interpretation in firmware (or D2/D3 physically); do not change the common-ground/button wiring.
 
