@@ -16,6 +16,10 @@
 
 The Nano owns local display updates and inputs. It **does not play the theme, directly activate pack-level vent hardware, or treat a switch position as proof the pack accepted a request**.
 
+## Encoder hardware wiring status
+
+As of 2026-09-30, the rotary encoder harness has been physically soldered. Intended Nano wiring is D2/D3 for the two rotary phases, D4 for the integrated pushbutton, and GND for the rotary common and button return, using `INPUT_PULLUP` on D2/D3/D4. The build photo shows purple, white, yellow, and black conductors, but color-to-signal continuity has not yet been meter-verified; do not encode behavior from wire color alone. Clockwise direction remains a firmware verification item and may require reversing the A/B interpretation.
+
 ## Volume and mute
 
 - Rotation reports an accumulated signed `ENCODER_DELTA` (e.g., `+3`), rather than a stream of independent plus/minus messages. The pack determines step size and clamps the result.
