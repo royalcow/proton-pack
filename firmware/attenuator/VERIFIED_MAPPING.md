@@ -51,6 +51,10 @@ bit is the electrical ROW output number.
 
 ## Encoder verification
 
+- Latest follow-up: user confirmed heartbeat and Serial both stop with the explicit timeout build uploaded. Fault remains unresolved; Timer1 phase diagnostics added for the next hardware test.
+
+- 2026-10-01 follow-up: idle unresponsiveness recurred with a static volume bar and no Serial messages. The earlier 45-minute pass does not establish a resolved fault. Found that the Wire timeout feature guard disabled timeout setup on AVR Boards 1.8.8; explicit timeout and heartbeat/status diagnostics now await hardware validation.
+
 - 2026-10-01: user reported that reset restored input after the earlier idle failure. With the updated input/display recovery code, the encoder remained responsive after 45 minutes idle. This confirms the observed idle test passed; the original failure cause is not isolated.
 
 - 2026-09-30: user confirmed correct rotation direction with `ENCODER_DIRECTION = 1`.

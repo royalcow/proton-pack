@@ -45,6 +45,15 @@ Physical orientation is recorded looking at the encoder rear exactly as installe
 
 If clockwise rotation produces the wrong sign, swap the A/B interpretation in firmware (or D2/D3 physically); do not change the common-ground/button wiring.
 
+### Attenuator toggle assignments (decided 2026-10-01)
+
+| Nano pin | Simulated control | Mode | Status |
+|---|---|---|---|
+| D5 | Theme play/stop toggle | `INPUT_PULLUP`, ON closes to GND | ASSIGNED IN FIRMWARE — physical wiring verification pending |
+| D6 | Vent trigger toggle | `INPUT_PULLUP`, ON closes to GND | ASSIGNED IN FIRMWARE — physical wiring verification pending |
+
+These belong to the dedicated attenuator Nano, not the main pack/wand pin map.
+
 ## Wand
 HasLab wand Activate and Fire signals are connected to the controller, with
 common ground. A 4-pin JST connection is available, but its physical pin order,

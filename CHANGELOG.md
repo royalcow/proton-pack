@@ -2,6 +2,17 @@
 
 Concise cross-session project changes. This is not a replacement for Git history.
 
+## 2026-10-01 — V2 attenuator vent
+
+- Replaced the linear drain with named buildup, chatter, uneven dump, and residual phases over 1510 ms, using deterministic frame tables in VentAnimation.h.
+- Vent starts from the current image and restores the latest volume/mute state; preserved mapping, inversion, diagnostics, theme/toggle behavior, and Serial vent/purge commands.
+- Added phase, kickback, brightness, restart, timer-wrap, and state-restoration tests. Hardware visual acceptance remains pending.
+
+## 2026-10-01 — Attenuator toggle assignments
+
+- Recorded D5 for theme play/stop and D6 for vent/purge, both active-low with internal pull-ups and shared GND.
+- Updated pinouts, control specification, and README to distinguish decided assignments from pending physical wiring verification.
+
 ## 2026-09-30 — Standalone encoder volume input
 
 - Added D2/D3 rotary decoding and a debounced D4 pushbutton to the standalone attenuator sketch using the recorded harness wiring and internal pull-ups.

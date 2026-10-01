@@ -27,3 +27,11 @@ Use I2C where practical for low-bandwidth internal peripherals. Exact topology, 
 
 ## 2026-09-28 — Standalone Attenuator Display Bring-up
 Use Nano hardware I2C on A4/A5 for the isolated HT16K33/BL28Z POC. Keep the raw display driver separate from test logic and determine physical order by discovery. This does not decide the future local software-I2C bus or implement the complete attenuator.
+
+## 2026-10-01 — Attenuator Toggle Pin Assignments
+
+- Assign flat-paddle toggle 1 (theme play/stop) to D5 and toggle 2 (manual vent/purge) to D6 on the dedicated attenuator Nano.
+- Configure both as `INPUT_PULLUP`: ON closes the input to common GND; OFF leaves it open. For SPDT switches, use common and the selected ON contact; leave the unused throw disconnected.
+- These assignments leave the encoder on D2/D3, encoder button on D4, and local HT16K33 bus on A4/A5. They do not change the main pack pin map.
+- The standalone sketch simulates accepted theme/vent requests locally. Final pack communication remains unimplemented.
+- Pin assignments are decided and implemented; installed wire colors, switch orientation, continuity, and physical operation remain unverified.

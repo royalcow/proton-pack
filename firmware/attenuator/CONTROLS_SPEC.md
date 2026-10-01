@@ -72,3 +72,13 @@ Because the latching switches encode both **level** and **edge**, do not collaps
 ## Not decided yet
 
 Final encoder step scale/acceleration, music interruption policy, theme sound hardware, vent timing/sound and bargraph pattern, I2C packet format and pin/address mapping, and future fog actuation. Keep these configurable; do not treat examples as electrically or behaviorally verified implementation.
+
+## Standalone simulation exception
+
+The standalone sketch now accepts debounced local toggle edges as simulated
+accepted state: theme drives a synthetic equalizer and vent runs the local bargraph
+animation. This is explicitly a test mode, with no audio, fog, or pack communication.
+Startup edge suppression and OFF-to-ON vent rearming follow the rules above.
+Pin assignment decision (2026-10-01): toggle 1/theme uses Nano D5; toggle 2/vent
+uses Nano D6. Both use `INPUT_PULLUP`, with ON closing to shared GND. Physical
+wiring verification remains pending; see README and PINOUTS.

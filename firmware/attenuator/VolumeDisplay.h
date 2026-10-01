@@ -7,6 +7,7 @@ class VolumeDisplay {
  public:
   struct Frame { uint32_t image; uint8_t brightness; };
   uint8_t volume() const { return volume_; }
+  bool transitioning() const { return transition_; }
   bool muted() const { return muted_; }
   void setVolume(uint8_t value) { volume_ = value > 100 ? 100 : value; }
   void setMuted(bool value, uint32_t now) {
@@ -16,6 +17,7 @@ class VolumeDisplay {
     started_ = now;
     breathStarted_ = now + 250;
   }
+  void settle(uint32_t now) { transition_ = false; breathStarted_ = now; }
   static uint32_t fill(uint8_t count) { return (uint32_t(1) << count) - 1; }
   uint8_t count() const { return (uint16_t(volume_) * 28 + 50) / 100; }
   uint8_t markerStart() const {

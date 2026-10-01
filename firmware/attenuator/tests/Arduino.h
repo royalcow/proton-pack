@@ -10,6 +10,9 @@ extern uint32_t clockMs;
 inline uint32_t millis() { return clockMs; }
 struct SerialMock {
  std::string incoming;
+ std::string output;
+ void print(const char *text) { output+=text; }
+ void print(char *text) { output+=text; }
  int txSpace=64;
  int availableForWrite() { return txSpace; }
  void begin(int) {}
@@ -25,10 +28,15 @@ extern SerialMock Serial;
 #define LOW 0
 #define INPUT_PULLUP 2
 #define CHANGE 3
-static int inputPins[5] = {1,1,1,1,1};
+static int inputPins[7] = {1,1,1,1,1,1,1};
 inline int digitalRead(int pin) { return inputPins[pin]; }
 inline void pinMode(int, int) {}
 inline int digitalPinToInterrupt(int pin) { return pin; }
 inline void attachInterrupt(int, void (*)(), int) {}
 inline void noInterrupts() {}
 inline void interrupts() {}
+
+#define LED_BUILTIN 13
+#define OUTPUT 1
+static int heartbeatPin=0;
+inline void digitalWrite(int, int value) { heartbeatPin=value; }

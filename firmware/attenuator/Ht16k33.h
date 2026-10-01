@@ -23,6 +23,9 @@ class Ht16k33 {
   void set(uint8_t row, uint8_t bit) {
     if (row < 8 && bit < 16) buffer_[row] |= uint16_t(1) << bit;
   }
+  bool isSet(uint8_t row, uint8_t bit) const {
+    return row < 8 && bit < 16 && (buffer_[row] & (uint16_t(1) << bit));
+  }
   bool write() {
     bus_.beginTransmission(address_);
     bus_.write(uint8_t(0x00));

@@ -29,13 +29,31 @@ so use `brightness 12` to see breathing. The chip provides 16 discrete levels.
 On unmute, the bar refills from low to high toward the fixed pair over 250 ms,
 then shows exactly the saved volume at configured brightness.
 
-`vent` (alias `purge`) drains a full bar over 28 steps of 40 ms, holds empty
-for 40 ms, and restores the current volume/mute state at 1160 ms. While muted,
-it returns to the breathing pair. Volume/mute changes during vent update saved
-state without interrupting vent. Repeating vent restarts it. Diagnostic
-commands cancel vent; `show` returns immediately to the volume renderer.
-Brightness/inversion changes preserve the active sequence. Diagnostic `speed`
-does not alter the mute transition, breathing cycle, or vent duration.
+`vent` (alias `purge`) runs the deterministic V2 pressure-dump sequence:
+
+| Phase | Duration | Behavior |
+|---|---:|---|
+| `VENT_BUILDUP` | 180 ms | Preserve the current image, then fill in four steps at 36 ms intervals |
+| `VENT_CHATTER` | 250 ms | Near-full dropouts from alternating ends; frame durations 45/35/60/45/65 ms |
+| `VENT_DUMP` | 700 ms | Uneven high-end collapse, with two brief kickbacks |
+| `VENT_RESIDUAL` | 380 ms | Three low-end pulses over 300 ms, followed by an 80 ms dark gap |
+| `VENT_COMPLETE` | At 1510 ms | Restore latest volume/mute state |
+
+Purge remaining-segment counts are 28, 25, 23, **25**, 19, 18, 14, **15**,
+10, 7, 3, 0. Frame durations are 60/45/65/40/55/75/45/80/60/70/55/50 ms.
+The residual pattern uses segment 0, then pair 2–3, then segment 1, separated
+by dark frames. There is no runtime randomness. `VentAnimation.h` keeps the
+named phases and tuning tables separate from driver and volume/mute ownership.
+
+Volume/mute changes during vent update saved state without interrupting it.
+Completion restores the current filled volume or breathing pair immediately,
+even if mute changed in the last millisecond. If the simulated theme is still
+playing and unmuted, the existing theme meter resumes. Repeated Serial vent
+requests restart buildup from the currently rendered image. Diagnostic commands
+can cancel vent; `show` returns to the normal renderer. Toggle rearming remains
+unchanged. All phases respect configured brightness, including 0=off, and use
+the verified mapping and normal `invert` behavior. Diagnostic `speed` does not
+alter the V2 timings or mute timing.
 
 All animation scheduling uses unsigned elapsed `millis()` comparisons, without
 `delay()` or waiting loops. Serial stays responsive throughout effects.
@@ -129,6 +147,40 @@ toggle per press. Set `brightness 12` to see the breathing animation (default 2
 holds steady as specified). Also reset with the button held and verify no toggle.
 Direction is hardware-confirmed; contact behavior and fast rotation still require testing.
 
+### Latching theme and vent toggles
+
+Chosen pin assignments (2026-10-01), implemented in the standalone sketch:
+
+| Toggle | Nano signal | Other contact |
+|---|---|---|
+| Theme | D5 (`THEME_SWITCH_PIN`) | GND |
+| Vent | D6 (`VENT_SWITCH_PIN`) | GND |
+
+Both use internal pull-ups; ON means the contact closes to GND. For SPDT
+switches, use common and the selected ON contact, leaving the other unused.
+Confirm these pins against the installed harness before upload.
+
+Both switches debounce for 25 ms without blocking. Their startup positions are
+sampled without generating events: if already ON, move OFF then ON to trigger.
+Theme ON starts a synthetic, smoothly bouncing full-height bargraph meter;
+OFF stops it. This simulates theme playback visually—there is no audio or
+music analysis. A simulated track lasts 180 seconds (`THEME_DURATION_MS`),
+then stops without replaying while the switch stays ON. Serial `theme` and
+`stoptheme` also exercise this behavior.
+
+Vent triggers once on OFF→ON and uses the existing vent animation. OFF rearms
+without aborting vent; a fresh ON while vent is active is ignored. Priority is
+vent, then muted markers/transitions, then theme meter, then normal volume.
+Muting hides the theme meter while its simulated playback clock continues.
+Unmuting completes the refill before resuming the meter. Volume remains saved
+while the meter runs. Vent completion restores whichever state currently applies.
+Diagnostics can temporarily replace the meter; `show` returns to normal rendering.
+
+Physical acceptance: boot with toggles ON (no effects), cycle theme OFF/ON/OFF,
+then trigger vent and leave it ON beyond completion (no repeat). Try vent while
+theme plays, then mute and change volume during vent; verify correct restoration.
+Toggle wiring and these new effects still await hardware confirmation.
+
 ### A0/A2 silkscreen correction
 
 Adafruit's [support discussion of #1427](https://forums.adafruit.com/viewtopic.php?t=210123)
@@ -190,6 +242,7 @@ steps through raw positions with manual confirmation. Either way, `discover` is 
 
 | Command | Behavior |
 |---|---|
+| `theme` / `stoptheme` | Start/stop the synthetic theme equalizer (no audio) |
 | `volume N` | Set saved simulated volume 0–100; preserve mute; reposition muted markers; defer display during vent |
 | `mute` / `unmute` | Toggle mute / explicitly unmute with V1 transitions |
 | `vent` / `purge` | Temporary full-to-empty drain, then restore volume or muted markers |
@@ -206,13 +259,17 @@ steps through raw positions with manual confirmation. Either way, `discover` is 
 | `invert` | Toggle logical reversal, including current static image; discovery stays raw |
 | `speed N` | Animation frame interval 20–5000 ms; discovery advances only with Return |
 | `demo` | Restart repeating fill/drain |
+| `diag` | Report loop phase, current/last stall, stall count, encoder interrupt activity, and sticky Wire timeout flag |
+| `status` | Report uptime, display readiness, volume/mute, raw encoder/button pins, and display failure count |
 | `help` | Print commands |
 
 Default brightness is 2, frame interval 100 ms. Edit constants or use commands.
 Settings are RAM-only and reset on restart. Animations use elapsed `millis()`
 subtraction (including wraparound); no delay-based animation or dynamic String.
 Wire transactions and the on-demand bus scan are synchronous; the AVR Wire
-25 ms timeout bounds a stuck transaction when supported by the installed core.
+25 ms timeout with peripheral reset is explicitly enabled. This sketch requires
+the Wire timeout API (provided by AVR Boards 1.8.8); it must not be guarded by
+`WIRE_HAS_TIMEOUT`, which that core does not define.
 The Serial parser rejects oversized lines, extra arguments, and invalid ranges.
 
 ## Driver and mapping
@@ -266,13 +323,15 @@ hardware operation. The sketch has no sensor feedback to establish these.
 ## Validation
 
 Arduino Nano ATmega328P compilation with Arduino AVR Boards 1.8.8 passed:
-10,672 bytes flash and 711 bytes static RAM. No upload performed for this extension.
+14,508 bytes flash and 968 bytes static RAM. No upload performed for this extension.
 
 The original POC mapping and diagnostic commands were tested on hardware by the
-user; see VERIFIED_MAPPING.md. New volume/mute/vent behavior still needs a
+user; see VERIFIED_MAPPING.md. New V2 vent behavior still needs a
 hardware run. Host tests cover all 101 volume values and mapped RAM outputs,
 quadrature decoding, encoder bounce/clamping, button debounce/hold/boot behavior,
 long idle and timer wraparound, full Serial buffers, automatic display recovery,
+V2 phase boundaries, kickbacks, restart, all brightness caps, final-millisecond
+state restoration, and inverted output mapping,
 invalid commands, saved state, mute transitions, all brightness caps, effect
 interruption and restoration, timer wraparound,
 discovery CRLF handling, and driver failure/recovery.
@@ -307,7 +366,7 @@ Behavior reference: [BARGRAPH_SPEC.md](BARGRAPH_SPEC.md).
 
 This standalone sketch implements the bargraph behavior using simulated local
 state controlled by the physical encoder/button and Serial commands. The encoder
-is wired and integrated (D2/D3 rotation, D4 pushbutton, shared GND). The paddle switches, NeoPixels,
+is wired and integrated (D2/D3 rotation, D4 pushbutton, shared GND). The two toggles now simulate local theme/vent requests. NeoPixels,
 authoritative pack state, and pack communication remain planned. Integration references:
 
 - [CONTROLS_SPEC.md](CONTROLS_SPEC.md) — encoder, mute, theme and vent controls.
@@ -324,3 +383,46 @@ authoritative pack state, and pack communication remain planned. Integration ref
 - The proposed 5-pin GX12 loom assigns 5V, GND, SDA, SCL and one spare. **Pin numbering, voltage interface, address and bus pull-ups are not finalized**; do not connect the 5 V Nano I2C interface directly to 3.3 V ESP32 lines without confirming level shifting.
 
 See the top-level [PROJECT.md](../../PROJECT.md) and [PINOUTS.md](../../PINOUTS.md) for the current-versus-planned distinction and verified wiring. Do not reuse the current main pack Nano pin map as the attenuator Nano pin map.
+
+## Diagnosing idle failures
+
+The Nano built-in LED toggles every 500 ms from the main loop, even when the
+volume bar is static. Serial remains silent at idle. Send `status` at 115200 baud:
+`up` is uptime in seconds, `ready` is display availability, `vol`/`mute` are saved
+state, `AB` is the raw 2-bit encoder state, `SW` is the raw button (0 pressed),
+and `err` counts checked display-operation failures. Status skips printing if
+the transmit buffer is full. It performs no I²C operations.
+
+If the problem recurs, record whether the built-in LED still blinks and whether
+`status` responds before resetting. A blinking LED with no Serial response
+suggests investigating the serial connection; a stopped LED suggests a loop
+stall or reset/power issue. Neither observation alone establishes the cause.
+The 45-minute successful test was followed by another reported idle failure;
+long-duration hardware validation must be repeated with the explicit timeout fix.
+
+### Freeze localization build
+
+The user confirmed that the heartbeat and Serial both stopped even after uploading
+the explicit Wire-timeout build. The cause is still unresolved. This version
+adds a Timer1 diagnostic interrupt at 100 Hz, independent of loop and millis.
+After two seconds without another loop iteration, it emits repeating groups on
+the built-in LED (100 ms on/off, with a pause between groups):
+
+- 1 flash: input handling, including any display update triggered by input.
+- 2 flashes: display recovery.
+- 3 flashes: Serial command handling, which may itself invoke display operations.
+- 4 flashes: display animation/rendering.
+- 5 flashes: between tracked operations.
+- 6 flashes: toggle handling, including display changes from a switch event.
+
+Normal operation keeps the existing 500 ms heartbeat. A solid on/off LED rather
+than grouped flashes means this diagnostic interrupt is not progressing either;
+interrupt blocking/starvation or a board/power fault remains possible. A phase
+code identifies a caller, not proof of the underlying cause. Record the pattern
+before reset. No automatic reset is enabled.
+
+`diag` reports the current phase, current and last detected stalls, a saturating
+stall count, encoder interrupt count modulo 256 (`irq8`), and the sticky Wire
+timeout flag. Counters are RAM-only and reset on reboot. Timer1 is reserved by
+this standalone diagnostic build: do not combine it with Servo or Timer1 PWM on
+D9/D10. The original POC and main pack firmware are unaffected.

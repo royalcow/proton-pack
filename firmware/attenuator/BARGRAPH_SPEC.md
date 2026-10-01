@@ -1,6 +1,6 @@
 # BL28Z bargraph behavior — V1
 
-**Status:** Agreed display behavior. Mute behavior is implemented in the standalone prototype; revised vent animation below is specified for the next implementation pass and needs hardware testing.
+**Status:** Agreed display behavior. Mute behavior is implemented in the standalone prototype; V2 vent animation below is implemented in the standalone prototype and needs hardware testing.
 **Hardware:** yellow 28-segment BL28Z driven by HT16K33, controlled by attenuator Nano.
 
 ## Behavior

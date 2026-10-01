@@ -2,10 +2,29 @@
 #include <Wire.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include "Ht16k33.h"
 #include "SegmentMap.h"
 #include "VolumeDisplay.h"
+#include "VentAnimation.h"
 #include "EncoderInput.h"
+#include "ToggleInput.h"
+#include "LoopDiagnostics.h"
+#if defined(__AVR_ATmega328P__)
+#include <avr/interrupt.h>
+#include <util/atomic.h>
+#endif
+
+LoopDiagnostics loopDiagnostics;
+volatile uint8_t encoderInterrupts = 0;
+
+// Assigned standalone toggle pins; physical verification pending.
+constexpr uint8_t THEME_SWITCH_PIN = 5;
+constexpr uint8_t VENT_SWITCH_PIN = 6;
+constexpr uint32_t THEME_DURATION_MS = 180000; // Simulated track, not audio timing.
+ToggleInput themeSwitch, ventSwitch;
+bool themePlaying = false;
+uint32_t themeStarted = 0;
 
 constexpr uint8_t ENCODER_A_PIN = 2;
 constexpr uint8_t ENCODER_B_PIN = 3;
@@ -15,6 +34,9 @@ constexpr uint8_t ENCODER_VOLUME_STEP = 4; // About one visible segment per cycl
 EncoderInput encoderInput;
 volatile int16_t encoderDelta = 0;
 uint32_t lastDisplayRetry = 0;
+uint32_t displayFailures = 0;
+uint32_t lastHeartbeat = 0;
+bool heartbeatOn = false;
 
 constexpr uint8_t HT_ADDRESS = 0x70;
 constexpr uint8_t DEFAULT_BRIGHTNESS = 2;
@@ -25,7 +47,7 @@ constexpr bool DISCOVERY_AT_BOOT = false;
 enum Mode { IDLE, SELF_TEST, DEMO, TEST, DISCOVER, CHASE, BOUNCE, VOLUME, VENT };
 Ht16k33 display;
 VolumeDisplay volumeDisplay;
-uint32_t ventStarted = 0;
+VentAnimation ventAnimation;
 uint8_t appliedBrightness = 255;
 Mode mode = IDLE;
 bool ready = false;
@@ -43,15 +65,17 @@ bool inputOverflow = false;
 bool previousWasCR = false;
 
 void help() {
+  Serial.println(F("theme | stoptheme (simulate theme play/stop)"));
   Serial.println(F("volume 0..100 | mute (toggle) | unmute | show | vent | purge"));
   Serial.println(F("scan | discover | test | all | off | fill 0..28"));
   Serial.println(F("Return on an empty line advances discovery"));
   Serial.println(F("chase | bounce | demo | brightness 0..15 | invert"));
-  Serial.println(F("speed 20..5000 (animation ms) | help"));
+  Serial.println(F("speed 20..5000 (animation ms) | status | diag | help"));
 }
 
 bool checked(bool success) {
   if (!success) {
+    ++displayFailures;
     ready = false;
     mode = IDLE;
     Serial.println(F("ERROR: HT16K33 I2C failed; animation stopped. Check wiring; run scan."));
@@ -83,8 +107,20 @@ void fillSegments(uint8_t count) {
   renderLogical();
 }
 
+uint8_t themeHeight(uint32_t elapsed) {
+  // Deterministic beat-like peaks; simulated meter, not audio analysis.
+  static const uint8_t peaks[] = {8,24,13,28,10,21,16,26,7,19,12,28,15,23,9,25};
+  uint8_t index = (elapsed / 120) % 16;
+  uint8_t next = (index + 1) % 16;
+  int16_t height = peaks[index] + (int16_t(peaks[next]) - peaks[index]) *
+                   int16_t(elapsed % 120) / 120;
+  return uint8_t(height);
+}
+
 void renderVolume() {
   VolumeDisplay::Frame state = volumeDisplay.render(millis(), brightness);
+  if (themePlaying && !volumeDisplay.muted() && !volumeDisplay.transitioning())
+    state.image = VolumeDisplay::fill(themeHeight(uint32_t(millis() - themeStarted)));
   if (!applyBrightness(state.brightness)) return;
   if (logicalImage != state.image) {
     logicalImage = state.image;
@@ -115,6 +151,36 @@ void encoderEdge() {
   // Keep ISR work bounded: no display, Wire, Serial, or millis calls here.
   if (delta > 0 && encoderDelta < 1000) ++encoderDelta;
   else if (delta < 0 && encoderDelta > -1000) --encoderDelta;
+}
+
+void encoderInterrupt() {
+  ++encoderInterrupts; // Low-byte activity counter, intentionally wraps.
+  encoderEdge();
+}
+
+#if defined(__AVR_ATmega328P__)
+ISR(TIMER1_COMPA_vect) {
+  loopDiagnostics.tick();
+  if (loopDiagnostics.stalledPhase) {
+    if (loopDiagnostics.faultLedOn()) PORTB |= _BV(PB5);
+    else PORTB &= ~_BV(PB5);
+  }
+}
+#endif
+
+void startLoopDiagnostics() {
+#if defined(__AVR_ATmega328P__)
+  // Diagnostic-only Timer1 use: no Servo or PWM on D9/D10 in this sketch.
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+    TCCR1A = 0;
+    TCCR1B = 0;
+    TCNT1 = 0;
+    OCR1A = F_CPU / 64 / 100 - 1;
+    TIFR1 = _BV(OCF1A);
+    TIMSK1 = _BV(OCIE1A);
+    TCCR1B = _BV(WGM12) | _BV(CS11) | _BV(CS10);
+  }
+#endif
 }
 
 void readEncoder() {
@@ -217,6 +283,35 @@ bool number(const char *s, uint16_t maximum, uint16_t &value) {
   return true;
 }
 
+void reportStatus() {
+  char line[64];
+  snprintf(line, sizeof(line), "up=%lu ready=%u vol=%u mute=%u AB=%u SW=%u err=%lu\r\n",
+           (unsigned long)(millis() / 1000), unsigned(ready),
+           unsigned(volumeDisplay.volume()), unsigned(volumeDisplay.muted()),
+           unsigned(encoderPhases()), unsigned(digitalRead(ENCODER_BUTTON_PIN)),
+           (unsigned long)displayFailures);
+  if (Serial.availableForWrite() >= int(strlen(line))) Serial.print(line);
+}
+
+void reportDiagnostics() {
+  char line[64];
+  snprintf(line, sizeof(line), "phase=%u stall=%u last=%u count=%u irq8=%u twiTimeout=%u\r\n",
+           unsigned(loopDiagnostics.phase), unsigned(loopDiagnostics.stalledPhase),
+           unsigned(loopDiagnostics.lastStall), unsigned(loopDiagnostics.stalls),
+           unsigned(encoderInterrupts), unsigned(Wire.getWireTimeoutFlag()));
+  if (Serial.availableForWrite() >= int(strlen(line))) Serial.print(line);
+}
+
+void heartbeat() {
+  if (uint32_t(millis() - lastHeartbeat) < 500) return;
+  lastHeartbeat = millis();
+  heartbeatOn = !heartbeatOn;
+  digitalWrite(LED_BUILTIN, heartbeatOn ? HIGH : LOW);
+}
+
+void setTheme(bool playing);
+void startVent();
+
 void execute(char *line) {
   char *cmd = strtok(line, " \t");
   char *arg = strtok(nullptr, " \t");
@@ -230,6 +325,8 @@ void execute(char *line) {
     Serial.println(F("ERROR: unexpected argument.")); return;
   }
   if (!strcmp(cmd, "help")) { help(); return; }
+  if (!strcmp(cmd, "diag")) { reportDiagnostics(); return; }
+  if (!strcmp(cmd, "status")) { reportStatus(); return; }
   if (!strcmp(cmd, "scan")) { scanBus(); return; }
   uint16_t value = 0;
   uint16_t maximum = !strcmp(cmd, "fill") ? 28 : !strcmp(cmd, "brightness") ? 15 : !strcmp(cmd, "volume") ? 100 : 5000;
@@ -237,7 +334,9 @@ void execute(char *line) {
     Serial.println(F("ERROR: invalid number/range. See help.")); return;
   }
   if (!ready) { Serial.println(F("ERROR: display unavailable; run scan.")); return; }
-  if (!strcmp(cmd, "volume")) {
+  if (!strcmp(cmd, "theme")) setTheme(true);
+  else if (!strcmp(cmd, "stoptheme")) setTheme(false);
+  else if (!strcmp(cmd, "volume")) {
     volumeDisplay.setVolume(value);
     if (mode != VENT) showVolume();
   } else if (!strcmp(cmd, "mute") || !strcmp(cmd, "unmute")) {
@@ -246,7 +345,7 @@ void execute(char *line) {
     Serial.println(volumeDisplay.muted() ? F("Muted") : F("Unmuted"));
   } else if (!strcmp(cmd, "show")) showVolume();
   else if (!strcmp(cmd, "vent") || !strcmp(cmd, "purge")) {
-    startMode(VENT); ventStarted = millis(); fillSegments(28);
+    startVent();
   } else if (!strcmp(cmd, "off") || !strcmp(cmd, "all") || !strcmp(cmd, "fill")) {
     if (!applyBrightness(brightness)) return;
     mode = IDLE;
@@ -294,9 +393,15 @@ void animate() {
   if (!ready || mode == IDLE || mode == DISCOVER) return;
   if (mode == VOLUME) { renderVolume(); return; }
   if (mode == VENT) {
-    uint32_t phase = uint32_t(millis() - ventStarted) / 40;
-    if (phase > 28) showVolume();
-    else if (phase != frame) { frame = phase; fillSegments(28 - frame); }
+    VentAnimation::Frame state = ventAnimation.render(millis());
+    if (state.phase == VentAnimation::VENT_COMPLETE) {
+      volumeDisplay.settle(millis());
+      showVolume();
+    }
+    else if (logicalImage != state.image) {
+      logicalImage = state.image;
+      renderLogical();
+    }
     return;
   }
   uint16_t interval = stepMs;
@@ -334,17 +439,23 @@ void animate() {
 
 void setup() {
   Serial.begin(115200);
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, LOW);
   pinMode(ENCODER_A_PIN, INPUT_PULLUP);
   pinMode(ENCODER_B_PIN, INPUT_PULLUP);
   pinMode(ENCODER_BUTTON_PIN, INPUT_PULLUP);
   encoderInput.begin(encoderPhases(), digitalRead(ENCODER_BUTTON_PIN) == LOW, millis());
-  attachInterrupt(digitalPinToInterrupt(ENCODER_A_PIN), encoderEdge, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(ENCODER_B_PIN), encoderEdge, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ENCODER_A_PIN), encoderInterrupt, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ENCODER_B_PIN), encoderInterrupt, CHANGE);
+  pinMode(THEME_SWITCH_PIN, INPUT_PULLUP);
+  pinMode(VENT_SWITCH_PIN, INPUT_PULLUP);
+  themeSwitch.begin(digitalRead(THEME_SWITCH_PIN) == LOW, millis());
+  ventSwitch.begin(digitalRead(VENT_SWITCH_PIN) == LOW, millis());
   Wire.begin();
   Wire.setClock(100000);
-#if defined(WIRE_HAS_TIMEOUT)
+// Required by this Nano sketch. AVR Boards 1.8.8 provides this API but
+  // does not define WIRE_HAS_TIMEOUT; a feature-macro guard silently disables it.
   Wire.setWireTimeout(25000, true);
-#endif
   Serial.println(F("BL28Z / HT16K33 standalone display test"));
   if (!validSegmentMap()) {
     Serial.println(F("ERROR: duplicate/out-of-range map. Fix SegmentMap.h."));
@@ -355,6 +466,38 @@ void setup() {
   help();
   scanBus();
   if (ready) startMode(DISCOVERY_AT_BOOT ? DISCOVER : SELF_TEST);
+  startLoopDiagnostics();
+}
+
+void setTheme(bool playing) {
+  themePlaying = playing;
+  if (playing) themeStarted = millis();
+  if (ready && mode != VENT) showVolume();
+}
+
+void startVent() {
+  if (!ready) return;
+  // Read the actual buffer, including raw mapping diagnostics.
+  uint32_t initial = 0;
+  for (uint8_t i=0;i<SEGMENT_COUNT;++i) {
+    const SegmentPosition &p = SEGMENT_MAP[reversed ? 27-i : i];
+    if (display.isSet(p.row,p.bit)) initial |= uint32_t(1)<<i;
+  }
+  startMode(VENT);
+  if (!ready) return;
+  logicalImage = initial;
+  ventAnimation.begin(millis(),initial);
+}
+
+void readToggles() {
+  uint32_t now = millis();
+  int8_t themeEvent = themeSwitch.update(digitalRead(THEME_SWITCH_PIN) == LOW, now);
+  int8_t ventEvent = ventSwitch.update(digitalRead(VENT_SWITCH_PIN) == LOW, now);
+  if (themeEvent >= 0) setTheme(themeEvent == 1);
+  // OFF only rearms the edge detector; it does not abort an active vent.
+  if (ventEvent == 1 && mode != VENT) startVent();
+  if (themePlaying && uint32_t(now - themeStarted) >= THEME_DURATION_MS)
+    setTheme(false);
 }
 
 void recoverDisplay() {
@@ -369,8 +512,17 @@ void recoverDisplay() {
 }
 
 void loop() {
+  loopDiagnostics.progressed = true;
+  heartbeat();
+  loopDiagnostics.phase = 6;
+  readToggles();
+  loopDiagnostics.phase = 1;
   readEncoder();
+  loopDiagnostics.phase = 2;
   recoverDisplay();
+  loopDiagnostics.phase = 3;
   readSerial();
+  loopDiagnostics.phase = 4;
   animate();
+  loopDiagnostics.phase = 0;
 }

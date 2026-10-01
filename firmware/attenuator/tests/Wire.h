@@ -2,6 +2,10 @@
 #include <stdint.h>
 #include <vector>
 struct TwoWire {
+ bool getWireTimeoutFlag() { return false; }
+ uint32_t timeoutUs=0;
+ bool resetOnTimeout=false;
+ void setWireTimeout(uint32_t us, bool reset) { timeoutUs=us; resetOnTimeout=reset; }
  bool connected=true;
  bool enabled=true;
  uint8_t address=0;
