@@ -73,7 +73,7 @@ int main() {
  assert(volumeDisplay.volume()==100);
  cmd("volume 50"); cmd("mute");
  assert(volumeDisplay.muted() && volumeDisplay.volume()==50);
- tick(250); assert(logicalImage==(3UL<<14));
+ tick(250); assert(logicalImage==(3UL<<12));
  for(int cap=0;cap<=15;cap++) {
    char line[20]; snprintf(line,sizeof(line),"brightness %d",cap); cmd(line);
    int lo=15,hi=0;
@@ -81,7 +81,7 @@ int main() {
      tick(10); assert(appliedBrightness<=cap);
      assert(Wire.enabled==(cap!=0));
      lo=std::min(lo,int(appliedBrightness)); hi=std::max(hi,int(appliedBrightness));
-     assert(logicalImage==(3UL<<14));
+     assert(logicalImage==(3UL<<12));
    }
    assert(lo==(cap<=3?cap:3) && hi==cap);
  }
@@ -93,12 +93,12 @@ int main() {
  cmd("unmute"); tick(250); assert(logicalImage==0);
  cmd("volume 75"); cmd("mute"); tick(250);
  cmd("purge"); cmd("volume 50"); assert(mode==VENT);
- tick(1160); assert(mode==VOLUME && volumeDisplay.muted() && logicalImage==(3UL<<14));
+ tick(1160); assert(mode==VOLUME && volumeDisplay.muted() && logicalImage==(3UL<<12));
  cmd("vent"); cmd("unmute"); cmd("volume 25"); tick(1160);
  assert(mode==VOLUME && !volumeDisplay.muted() && logicalImage==127);
  cmd("vent"); cmd("off"); tick(2000); assert(mode==IDLE && logicalImage==0);
  cmd("show"); assert(logicalImage==127);
- clockMs=0xffffff80UL; cmd("mute"); tick(250); assert(logicalImage==(3UL<<7));
+ clockMs=0xffffff80UL; cmd("mute"); tick(250); assert(logicalImage==(3UL<<5));
  tick(1250); assert(appliedBrightness==15);
  tick(1250); assert(appliedBrightness==3);
  cmd("unmute"); tick(250); assert(logicalImage==127 && appliedBrightness==15);
@@ -107,5 +107,69 @@ int main() {
  cmd("brightness 12"); assert(Wire.enabled && appliedBrightness<=12);
  cmd("vent"); Wire.connected=false; tick(40); assert(!ready && mode==IDLE);
  Wire.connected=true; cmd("scan"); assert(ready && mode==VOLUME && volumeDisplay.volume()==25);
- std::cout << "PASS: V1 mute boundaries, transitions, brightness caps, override restoration, wraparound, and existing diagnostics\n";
+ // Mute never adds a segment above a bar with at least two lit segments.
+ for (int v=0;v<=100;v++) {
+   VolumeDisplay state;
+   state.setVolume(v);
+   uint32_t bar=state.render(0,12).image;
+   state.setMuted(true,0);
+   for (int t=0;t<=250;t++) {
+     uint32_t image=state.render(t,12).image;
+     if(state.count()>=2) assert((image & ~bar)==0);
+   }
+   uint8_t start=state.count()>=2?state.count()-2:0;
+   assert(state.render(250,12).image==(3UL<<start));
+ }
+ // The marker pair stays fixed while the lower bar drains down/refills up.
+ VolumeDisplay directionCheck;
+ directionCheck.setVolume(50);
+ directionCheck.setMuted(true,0);
+ assert(directionCheck.render(0,12).image==0x3fff);
+ assert(directionCheck.render(125,12).image==((3UL<<12)|0x3f));
+ assert(directionCheck.render(250,12).image==(3UL<<12));
+ directionCheck.setMuted(false,250);
+ assert(directionCheck.render(250,12).image==(3UL<<12));
+ assert(directionCheck.render(375,12).image==((3UL<<12)|0x3f));
+ assert(directionCheck.render(500,12).image==0x3fff);
+ // ISR quadrature: 11 -> 01 -> 00 -> 10 -> 11 is positive.
+ auto phases=[](int p) { inputPins[2]=(p>>1)&1; inputPins[3]=p&1; encoderEdge(); };
+ auto forward=[&]() { phases(1); phases(0); phases(2); phases(3); readEncoder(); };
+ auto backward=[&]() { phases(2); phases(0); phases(1); phases(3); readEncoder(); };
+ cmd("unmute"); cmd("volume 50"); forward(); assert(volumeDisplay.volume()==54);
+ backward(); assert(volumeDisplay.volume()==50);
+ phases(1); phases(3); phases(1); phases(0); phases(2); phases(3); readEncoder();
+ assert(volumeDisplay.volume()==54); // Bounce produced only one step.
+ phases(0); phases(3); readEncoder(); assert(volumeDisplay.volume()==54);
+ cmd("volume 100"); forward(); assert(volumeDisplay.volume()==100);
+ backward(); assert(volumeDisplay.volume()==96);
+ cmd("volume 0"); backward(); assert(volumeDisplay.volume()==0);
+ // Button bounce, held press, release, second press, and timer wraparound.
+ inputPins[4]=0; readEncoder(); clockMs+=10; inputPins[4]=1; readEncoder();
+ inputPins[4]=0; readEncoder(); clockMs+=24; readEncoder(); assert(!volumeDisplay.muted());
+ clockMs+=1; readEncoder(); assert(volumeDisplay.muted());
+ clockMs+=1000; readEncoder(); assert(volumeDisplay.muted());
+ forward(); assert(volumeDisplay.volume()==4 && volumeDisplay.muted());
+ inputPins[4]=1; readEncoder(); clockMs+=25; readEncoder();
+ clockMs=0xfffffff0UL; inputPins[4]=0; readEncoder(); clockMs+=25; readEncoder();
+ assert(!volumeDisplay.muted());
+ cmd("vent"); forward(); assert(mode==VENT && volumeDisplay.volume()==8);
+ tick(1160); assert(mode==VOLUME);
+ // Long idle and millis wrap must not suppress subsequent input.
+ cmd("unmute"); cmd("volume 50");
+ clockMs += 3600000UL; readEncoder(); forward(); assert(volumeDisplay.volume()==54);
+ clockMs=0xfffffff0UL; readEncoder(); clockMs+=100; backward();
+ assert(volumeDisplay.volume()==50);
+ Serial.txSpace=0; forward(); assert(volumeDisplay.volume()==54); Serial.txSpace=64;
+ // A transient I2C failure recovers automatically with the latest saved state.
+ Wire.connected=false; cmd("all"); assert(!ready);
+ forward(); assert(volumeDisplay.volume()==58);
+ lastDisplayRetry=clockMs; clockMs+=1000; recoverDisplay(); assert(!ready);
+ Wire.connected=true; clockMs+=999; recoverDisplay(); assert(!ready);
+ clockMs+=1; recoverDisplay(); assert(ready && mode==VOLUME);
+ assert(logicalImage==VolumeDisplay::fill(volumeDisplay.count()));
+ EncoderInput startup;
+ startup.begin(3,true,0); assert(!startup.button(true,100));
+ startup.button(false,101); startup.button(false,126);
+ startup.button(true,127); assert(startup.button(true,152));
+ std::cout << "PASS: encoder quadrature/button/clamping, V1 mute boundaries, transitions, brightness caps, override restoration, wraparound, and existing diagnostics\n";
 }

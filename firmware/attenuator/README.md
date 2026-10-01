@@ -15,9 +15,10 @@ round to zero. This is a local simulation; it does not change actual audio.
 
 `mute` toggles simulated confirmed mute; `unmute` explicitly clears it.
 The saved volume never changes as a side effect of mute. On mute, the filled
-bar drains from the low end toward two adjacent saved-volume markers over
-250 ms. The pair's first index is `min(26, round(volume * 27 / 100))`:
-volume 0 gives (0,1), 50 gives (14,15), and 100 gives (26,27).
+bar drains from high to low beneath two fixed adjacent saved-volume markers over
+250 ms. The pair stays on the top two currently illuminated volume segments:
+its first index is `max(0, litSegmentCount - 2)`. Volume 50 gives (12,13),
+and 100 gives (26,27). When fewer than two segments are lit, use (0,1).
 Volume adjustments while muted reposition the pair without unmuting.
 
 Both markers breathe together using the HT16K33 global brightness, with a
@@ -25,7 +26,7 @@ Both markers breathe together using the HT16K33 global brightness, with a
 stay constant; **brightness 0 disables the display**, including diagnostics.
 The configured brightness is always the ceiling. Default brightness is 2,
 so use `brightness 12` to see breathing. The chip provides 16 discrete levels.
-On unmute, the bar refills from the pair toward its low end over 250 ms,
+On unmute, the bar refills from low to high toward the fixed pair over 250 ms,
 then shows exactly the saved volume at configured brightness.
 
 `vent` (alias `purge`) drains a full bar over 28 steps of 40 ms, holds empty
@@ -91,6 +92,43 @@ Rear-view orientation as installed: top-left blue, top-center GND, top-right whi
 
 Configure D2, D3 and D4 as `INPUT_PULLUP`. Rotation and button closures are therefore active-low contact events. If clockwise is decoded backwards, reverse A/B in firmware or swap D2/D3; leave the shared ground unchanged.
 
+### Encoder operation and checks
+
+Hardware update (2026-10-01): the user confirmed encoder response after 45 minutes
+idle with the updated code. Reset had restored operation with the earlier failure;
+the exact cause remains unconfirmed.
+
+Rotation changes simulated volume by four points per complete four-edge cycle,
+clamped to 0–100. `ENCODER_VOLUME_STEP` configures the scale; there is no
+acceleration. Each cycle now changes the bar by roughly one segment.
+`ENCODER_DIRECTION = 1` treats phase sequence 11→01→00→10→11 as increasing;
+set it to `-1` if clockwise decreases on the installed encoder. Encoders with
+two detents per electrical cycle will require two clicks per four-point adjustment.
+The user confirmed the installed encoder direction is correct on 2026-09-30
+with `ENCODER_DIRECTION = 1`. Detent behavior remains to be checked.
+
+D2/D3 CHANGE interrupts accumulate complete cycles while display updates run.
+The decoder cancels backtracking bounce and rejects invalid two-bit jumps.
+On Nano, both phase pins are sampled together from PORTD. The main loop also
+reconciles missed edges under the interrupt lock. Unchanged volume frames avoid
+I²C rewrites, and optional encoder Serial telemetry is dropped when the transmit
+buffer is full rather than blocking input handling.
+`EncoderInput.h` keeps contact decoding separate from display and simulation.
+The D4 button uses a nonblocking 25 ms debounce: press toggles mute once,
+holding does not repeat, and a button held at boot must be released first.
+
+Rotation while muted moves the saved-volume pair without unmuting. Pressing
+again uses the existing 250 ms unmute refill. Encoder input returns diagnostic
+screens to volume; vent retains priority and restores the latest input state
+when done. Input still updates simulated state if the display is unavailable;
+Automatic retries once per second restore it after recovery; `scan` remains available. Serial volume/mute commands remain available.
+
+After upload, turn slowly in both directions and check 0/100 limits. Turn quickly
+while muted and during vent. Press, hold, release, and press again; verify one
+toggle per press. Set `brightness 12` to see the breathing animation (default 2
+holds steady as specified). Also reset with the button held and verify no toggle.
+Direction is hardware-confirmed; contact behavior and fast rotation still require testing.
+
 ### A0/A2 silkscreen correction
 
 Adafruit's [support discussion of #1427](https://forums.adafruit.com/viewtopic.php?t=210123)
@@ -140,7 +178,8 @@ Serial: **115200 baud**, newline or carriage-return termination (CRLF works).
 Commands are lowercase. Startup scans 0x08–0x77 and initializes the configured
 address (default `HT_ADDRESS = 0x70`). An ACK verifies an address responds,
 not the chip identity. Missing hardware or failed writes produce explicit
-errors and stop animations. `scan` can recover after fixing the bus and leaves
+errors and stop animations. The configured device is retried once per second;
+`scan` can also recover after fixing the bus and leaves
 a recovered display showing saved volume; `show` also restores this display. Change HT_ADDRESS if the
 scanner finds the breakout at another address, then rebuild.
 
@@ -227,11 +266,13 @@ hardware operation. The sketch has no sensor feedback to establish these.
 ## Validation
 
 Arduino Nano ATmega328P compilation with Arduino AVR Boards 1.8.8 passed:
-9,438 bytes flash and 677 bytes static RAM. No upload performed for this extension.
+10,672 bytes flash and 711 bytes static RAM. No upload performed for this extension.
 
 The original POC mapping and diagnostic commands were tested on hardware by the
 user; see VERIFIED_MAPPING.md. New volume/mute/vent behavior still needs a
 hardware run. Host tests cover all 101 volume values and mapped RAM outputs,
+quadrature decoding, encoder bounce/clamping, button debounce/hold/boot behavior,
+long idle and timer wraparound, full Serial buffers, automatic display recovery,
 invalid commands, saved state, mute transitions, all brightness caps, effect
 interruption and restoration, timer wraparound,
 discovery CRLF handling, and driver failure/recovery.
@@ -264,9 +305,9 @@ Behavior reference: [BARGRAPH_SPEC.md](BARGRAPH_SPEC.md).
 
 ## Full attenuator integration (planned)
 
-This standalone sketch implements the bargraph behavior using simulated Serial
-state. The encoder is now physically wired (D2/D3 rotation, D4 pushbutton, shared
-GND) but is not yet integrated into this sketch. The paddle switches, NeoPixels,
+This standalone sketch implements the bargraph behavior using simulated local
+state controlled by the physical encoder/button and Serial commands. The encoder
+is wired and integrated (D2/D3 rotation, D4 pushbutton, shared GND). The paddle switches, NeoPixels,
 authoritative pack state, and pack communication remain planned. Integration references:
 
 - [CONTROLS_SPEC.md](CONTROLS_SPEC.md) — encoder, mute, theme and vent controls.

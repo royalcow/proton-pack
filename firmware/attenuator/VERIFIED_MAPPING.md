@@ -49,6 +49,13 @@ bit is the electrical ROW output number.
 | 26 | 2 | 6 |
 | 27 | 3 | 6 |
 
+## Encoder verification
+
+- 2026-10-01: user reported that reset restored input after the earlier idle failure. With the updated input/display recovery code, the encoder remained responsive after 45 minutes idle. This confirms the observed idle test passed; the original failure cause is not isolated.
+
+- 2026-09-30: user confirmed correct rotation direction with `ENCODER_DIRECTION = 1`.
+- Detent scale, debounce/hold behavior, and fast rotation: not yet individually confirmed.
+
 ## Hardware record
 
 - Date / observer: pending

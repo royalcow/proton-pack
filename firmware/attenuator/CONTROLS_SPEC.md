@@ -18,7 +18,7 @@ The Nano owns local display updates and inputs. It **does not play the theme, di
 
 ## Encoder hardware wiring status
 
-As of 2026-09-30, the rotary encoder harness is physically soldered and its wire colors are recorded: D2/rotary phase A = **blue** at the top-left outer contact; D3/rotary phase B = **white** at the top-right outer contact; D4/pushbutton signal = **yellow** at the bottom-left contact; GND = **black** from the bottom-right switch contact. The top-center rotary common is locally tied to that bottom-right GND contact. Configure D2/D3/D4 as `INPUT_PULLUP`. Clockwise direction remains a firmware verification item and may require reversing the A/B interpretation.
+As of 2026-09-30, the rotary encoder harness is physically soldered and its wire colors are recorded: D2/rotary phase A = **blue** at the top-left outer contact; D3/rotary phase B = **white** at the top-right outer contact; D4/pushbutton signal = **yellow** at the bottom-left contact; GND = **black** from the bottom-right switch contact. The top-center rotary common is locally tied to that bottom-right GND contact. Configure D2/D3/D4 as `INPUT_PULLUP`. The user confirmed correct rotation direction on 2026-09-30 with `ENCODER_DIRECTION = 1` in the standalone sketch.
 
 ## Volume and mute
 

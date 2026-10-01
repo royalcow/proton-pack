@@ -2,6 +2,12 @@
 
 Concise cross-session project changes. This is not a replacement for Git history.
 
+## 2026-09-30 — Standalone encoder volume input
+
+- Added D2/D3 rotary decoding and a debounced D4 pushbutton to the standalone attenuator sketch using the recorded harness wiring and internal pull-ups.
+- Rotation adjusts simulated volume; button presses toggle the V1 breathing mute state. Vent preserves input changes for restoration. Pack communication remains unimplemented.
+- Host tests and Nano compilation passed; user confirmed correct encoder direction; detent scale and other physical input behavior await hardware validation.
+
 ## 2026-09-30
 
 - Attenuator rotary encoder harness physically soldered. Intended Nano wiring remains D2/D3 for encoder phases, D4 for the integrated pushbutton, and shared ground returns with `INPUT_PULLUP` inputs.

@@ -19,8 +19,9 @@ class VolumeDisplay {
   static uint32_t fill(uint8_t count) { return (uint32_t(1) << count) - 1; }
   uint8_t count() const { return (uint16_t(volume_) * 28 + 50) / 100; }
   uint8_t markerStart() const {
-    uint8_t index = (uint16_t(volume_) * 27 + 50) / 100;
-    return index > 26 ? 26 : index;
+    // Keep the pair inside the existing filled bar, at its upper edge.
+    uint8_t lit = count();
+    return lit >= 2 ? lit - 2 : 0;
   }
   Frame render(uint32_t now, uint8_t cap) {
     uint8_t countNow = count();
@@ -31,10 +32,11 @@ class VolumeDisplay {
     uint32_t image = muted_ ? pair : bar;
     uint8_t level = cap;
     if (transition_) {
-      uint8_t step = (elapsed * countNow) / 250;
-      // Drain from the low end toward the saved-volume pair; refill from it.
-      image = muted_ ? ((bar & ~fill(step)) | pair)
-                     : ((bar & ~fill(countNow - step)) | pair);
+      uint8_t span = markerStart();
+      uint8_t step = (elapsed * span) / 250;
+      // Keep the saved-volume pair fixed. Drain high-to-low beneath it;
+      // refill low-to-high on unmute.
+      image = pair | fill(muted_ ? span - step : step);
     } else if (muted_ && cap > 3) {
       uint16_t phase = uint32_t(now - breathStarted_) % 2500;
       uint16_t ramp = phase <= 1250 ? phase : 2500 - phase;

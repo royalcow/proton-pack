@@ -5,6 +5,16 @@
 #include "Ht16k33.h"
 #include "SegmentMap.h"
 #include "VolumeDisplay.h"
+#include "EncoderInput.h"
+
+constexpr uint8_t ENCODER_A_PIN = 2;
+constexpr uint8_t ENCODER_B_PIN = 3;
+constexpr uint8_t ENCODER_BUTTON_PIN = 4;
+constexpr int8_t ENCODER_DIRECTION = 1; // Set -1 if clockwise decreases volume.
+constexpr uint8_t ENCODER_VOLUME_STEP = 4; // About one visible segment per cycle.
+EncoderInput encoderInput;
+volatile int16_t encoderDelta = 0;
+uint32_t lastDisplayRetry = 0;
 
 constexpr uint8_t HT_ADDRESS = 0x70;
 constexpr uint8_t DEFAULT_BRIGHTNESS = 2;
@@ -84,9 +94,52 @@ void renderVolume() {
 
 void showVolume() {
   mode = VOLUME;
-  // Force a refresh after raw discovery (which bypasses logicalImage).
+  // Force a refresh only when returning from another display mode.
   logicalImage = 0xffffffffUL;
   renderVolume();
+}
+
+uint8_t encoderPhases() {
+#if defined(__AVR_ATmega328P__)
+  // D2/D3 share PORTD: capture both contacts at the same instant.
+  uint8_t pins = PIND;
+  return ((pins & _BV(PD2)) ? 2 : 0) | ((pins & _BV(PD3)) ? 1 : 0);
+#else
+  return (digitalRead(ENCODER_A_PIN) == HIGH ? 2 : 0) |
+         (digitalRead(ENCODER_B_PIN) == HIGH ? 1 : 0);
+#endif
+}
+
+void encoderEdge() {
+  int8_t delta = encoderInput.rotate(encoderPhases());
+  // Keep ISR work bounded: no display, Wire, Serial, or millis calls here.
+  if (delta > 0 && encoderDelta < 1000) ++encoderDelta;
+  else if (delta < 0 && encoderDelta > -1000) --encoderDelta;
+}
+
+void readEncoder() {
+  noInterrupts();
+  // Reconcile a missed edge; unchanged samples do not generate movement.
+  encoderEdge();
+  int16_t delta = encoderDelta;
+  encoderDelta = 0;
+  interrupts();
+  bool press = encoderInput.button(digitalRead(ENCODER_BUTTON_PIN) == LOW, millis());
+  if (!delta && !press) return;
+  int32_t next = int32_t(volumeDisplay.volume()) +
+                 int32_t(delta) * ENCODER_DIRECTION * ENCODER_VOLUME_STEP;
+  volumeDisplay.setVolume(next < 0 ? 0 : next > 100 ? 100 : next);
+  if (press) volumeDisplay.setMuted(!volumeDisplay.muted(), millis());
+  // A vent retains priority; inputs still update the state restored afterward.
+  if (ready && mode != VENT) {
+    if (mode == VOLUME) renderVolume();
+    else showVolume();
+  }
+  // Drop optional telemetry rather than block input/display work on Serial.
+  if (Serial.availableForWrite() >= 32) {
+    Serial.print(F("Volume: ")); Serial.print(volumeDisplay.volume());
+    Serial.println(volumeDisplay.muted() ? F(" (muted)") : F(" (unmuted)"));
+  }
 }
 
 void printPosition(uint8_t index, uint8_t row, uint8_t bit) {
@@ -281,6 +334,12 @@ void animate() {
 
 void setup() {
   Serial.begin(115200);
+  pinMode(ENCODER_A_PIN, INPUT_PULLUP);
+  pinMode(ENCODER_B_PIN, INPUT_PULLUP);
+  pinMode(ENCODER_BUTTON_PIN, INPUT_PULLUP);
+  encoderInput.begin(encoderPhases(), digitalRead(ENCODER_BUTTON_PIN) == LOW, millis());
+  attachInterrupt(digitalPinToInterrupt(ENCODER_A_PIN), encoderEdge, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ENCODER_B_PIN), encoderEdge, CHANGE);
   Wire.begin();
   Wire.setClock(100000);
 #if defined(WIRE_HAS_TIMEOUT)
@@ -298,7 +357,20 @@ void setup() {
   if (ready) startMode(DISCOVERY_AT_BOOT ? DISCOVER : SELF_TEST);
 }
 
+void recoverDisplay() {
+  if (ready || uint32_t(millis() - lastDisplayRetry) < 1000) return;
+  lastDisplayRetry = millis();
+  // A transient bus error must not leave the encoder apparently dead forever.
+  // Retry only the configured device, without a full scan or repeated logging.
+  if (!display.begin(HT_ADDRESS, brightness)) return;
+  ready = true;
+  appliedBrightness = 255;
+  showVolume();
+}
+
 void loop() {
+  readEncoder();
+  recoverDisplay();
   readSerial();
   animate();
 }

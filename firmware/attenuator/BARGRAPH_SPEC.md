@@ -6,12 +6,12 @@
 ## Behavior
 
 - Normal operation displays confirmed master volume (logical 0–100) as a filled bar.
-- On confirmed mute, drain the filled bar into **two adjacent lit segments** at the saved-volume position. Mute must not change the stored volume.
+- On confirmed mute, drain the filled bar from high to low beneath **two adjacent lit segments** at the saved-volume position. Mute must not change the stored volume.
 - Both segments breathe **in sync** over an approximately 2.5-second cycle. HT16K33 brightness varies smoothly between **3 and the configured display brightness**, inclusive.
 - The configured brightness is a hard ceiling. If configured brightness is 1–3, hold the marker pair at that value instead of exceeding the cap. If configured brightness is 0, honor off.
-- Use the verified physical-to-logical segment mapping from the POC; logical indices are 0–27. Clamp the two-segment window at both ends: saved volume 0 maps to pair (0,1); 100 maps to (26,27).
+- Use the verified physical-to-logical segment mapping from the POC; logical indices are 0–27. Anchor the pair to the top two segments of the normal filled-volume bar (`max(0, litSegmentCount - 2)` through the next index), so muting does not move the indication upward. When fewer than two segments are lit, use (0,1). Clamp the two-segment window at both ends: saved volume 0 maps to pair (0,1); 100 maps to (26,27).
 - Adjustments during mute reposition the pair to the **confirmed** saved-volume setting without unmuting.
-- On unmute, refill from the pair to confirmed master volume over approximately 250 ms and restore configured normal brightness.
+- On unmute, refill from low to high beneath the fixed pair to confirmed master volume over approximately 250 ms and restore configured normal brightness.
 - A higher-priority temporary display sequence may override the marker. When it finishes, return to the breathing pair if still muted; otherwise show confirmed volume.
 
 ## Implementation notes
