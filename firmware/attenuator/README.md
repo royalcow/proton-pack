@@ -3,7 +3,7 @@
 Arduino Nano ATmega328P / 5 V, yellow BL28Z-3005SA04Y, and Adafruit
 HT16K33 breakout #1427. This sketch extends the verified bargraph mapping;
 `firmware/POC/Attenuator_Bargraph/` remains the original diagnostic POC.
-There is no pack I²C protocol, audio control, or main pack firmware change.
+There is no pack I²C protocol implementation or main pack firmware change yet. V1 architecture now treats the attenuator Nano as the authoritative source for user-selected master volume; future pack communication will send absolute effective volume only.
 
 ## Volume, mute, and vent
 
@@ -362,6 +362,14 @@ at brightness zero. The sketch handles Serial, diagnostics, and temporary vent
 priority. `SegmentMap.h` and its verified lookup table are unchanged.
 Behavior reference: [BARGRAPH_SPEC.md](BARGRAPH_SPEC.md).
 
+### V1 volume ownership
+
+The attenuator Nano is authoritative for the user-selected master-volume value (0–100). Encoder rotation updates that value locally and the BL28Z responds immediately. The pack/audio subsystem should receive only the resulting **absolute effective volume**.
+
+The encoder pushbutton remains a local mute convenience so the attenuator can preserve a saved volume and render the breathing marker. Pack-facing mute is not a separate protocol state: while locally muted, send effective volume 0. Encoder changes while muted update the saved value/marker but keep effective volume at 0; unmute sends the latest saved absolute volume.
+
+This makes volume updates idempotent and removes any need to replay encoder deltas or mute events after reconnect. For V1, no other device should write master volume without a new synchronization/ownership rule.
+
 ## Full attenuator integration (planned)
 
 This standalone sketch implements the bargraph behavior using simulated local
@@ -375,7 +383,7 @@ authoritative pack state, and pack communication remain planned. Integration ref
 
 ## Proposed integration
 
-- Pack-facing link: Nano as an I2C peripheral on the planned shared pack bus; ESP32 is the master and polls inputs/sends state.
+- Pack-facing link: Nano as an I2C peripheral on the planned shared pack bus; ESP32 is the master. For volume, the Nano sends absolute effective volume 0–100; it does not send encoder deltas or a separate mute flag.
 - The Nano must control its own outputs, not rely on the ESP32 to stream LED frames or drive bargraph segments.
 - Local HT16K33 driver beside the BL28Z bargraph; a **separate local software I2C bus** is proposed if the Nano hardware I2C interface is used in peripheral mode. Verify library compatibility and timing experimentally.
 - Physical packaging: Nano and power/distribution on the removable base plate; bargraph/driver near the shell window; detachable internal harnesses.
