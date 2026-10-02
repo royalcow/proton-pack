@@ -5,13 +5,13 @@
 
 ## Behavior
 
-- Normal operation displays confirmed master volume (logical 0–100) as a filled bar.
-- On confirmed mute, drain the filled bar from high to low beneath **two adjacent lit segments** at the saved-volume position. Mute must not change the stored volume.
+- Normal operation displays the attenuator-owned selected master volume (logical 0–100) as a filled bar.
+- On local mute, drain the filled bar from high to low beneath **two adjacent lit segments** at the saved-volume position. Local mute must not change the stored selected volume; pack-facing effective volume becomes 0.
 - Both segments breathe **in sync** over an approximately 2.5-second cycle. HT16K33 brightness varies smoothly between **3 and the configured display brightness**, inclusive.
 - The configured brightness is a hard ceiling. If configured brightness is 1–3, hold the marker pair at that value instead of exceeding the cap. If configured brightness is 0, honor off.
 - Use the verified physical-to-logical segment mapping from the POC; logical indices are 0–27. Anchor the pair to the top two segments of the normal filled-volume bar (`max(0, litSegmentCount - 2)` through the next index), so muting does not move the indication upward. When fewer than two segments are lit, use (0,1). Clamp the two-segment window at both ends: saved volume 0 maps to pair (0,1); 100 maps to (26,27).
-- Adjustments during mute reposition the pair to the **confirmed** saved-volume setting without unmuting.
-- On unmute, refill from low to high beneath the fixed pair to confirmed master volume over approximately 250 ms and restore configured normal brightness.
+- Adjustments during local mute reposition the pair to the saved-volume setting without unmuting. These adjustments do not make the pack audible; effective volume remains 0 until local unmute.
+- On local unmute, refill from low to high beneath the fixed pair to the saved selected volume over approximately 250 ms, restore configured normal brightness, and send that absolute volume to the pack.
 - A higher-priority temporary display sequence may override the marker. When it finishes, return to the breathing pair if still muted; otherwise show confirmed volume.
 
 
@@ -48,14 +48,14 @@ The existing straight full-to-empty drain is deprecated for the attenuator exper
 - After the main bar reaches empty, emit 2–3 short isolated low-end pulses using one or two adjacent segments.
 - Residual pulses should be separated spatially and/or temporally, then end with approximately **80 ms dark**.
 - After the dark gap, restore the correct current steady state:
-  - confirmed filled volume if unmuted;
-  - the two-segment breathing saved-volume marker if muted.
+  - selected filled volume if locally unmuted;
+  - the two-segment breathing saved-volume marker if locally muted.
 
 ### Vent animation rules
 
 - Overall target duration: approximately **1.4–1.6 seconds**. Exact phase timings are tuning values, not protocol timing guarantees.
 - Keep the animation fully nonblocking with `millis()`; no `delay()` or waiting loops.
-- Preserve confirmed volume and mute state underneath the temporary effect. Changes received during vent update the saved state but do not have to interrupt the visual sequence.
+- Preserve attenuator-owned selected volume and local mute state underneath the temporary effect. Changes received during vent update the saved state but do not have to interrupt the visual sequence.
 - A repeated vent request may restart the visual sequence from buildup.
 - Diagnostic commands may cancel the vent effect as they do today.
 - The main purge should use the configured display brightness ceiling. Slight brightness flutter during chatter is allowed, but never exceed the configured cap and honor brightness 0 as off.
@@ -77,7 +77,7 @@ Keep frame/timing tables separate from state ownership so the animation can be t
 
 ## Implementation notes
 
-Use nonblocking millis()-based animation. Preserve the confirmed volume and mute state separately from the rendered LED pattern. HT16K33 brightness is global to this one display, so both lit segments breathe together.
+Use nonblocking millis()-based animation. Preserve the attenuator-owned selected volume and local mute state separately from the rendered LED pattern. The pack does not require a separate mute field; effective volume 0 is the pack-facing result of local mute. HT16K33 brightness is global to this one display, so both lit segments breathe together.
 
 ## Acceptance checks
 
