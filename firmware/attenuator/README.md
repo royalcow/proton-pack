@@ -381,6 +381,19 @@ authoritative pack state, and pack communication remain planned. Integration ref
 - [BARGRAPH_SPEC.md](BARGRAPH_SPEC.md) — V1 bargraph behavior implemented here; hardware acceptance pending.
 - [LIGHTING_SPEC.md](LIGHTING_SPEC.md) — connection lamp, radiation lens and lower dome.
 
+### Planned controller-board connectors
+
+| Ref | Connector | Pin order |
+|---|---|---|
+| J1 | 2-pin bench/test power | +5V, GND |
+| J2 | 4-pin pack loom | GND, +5V, SDA, SCL |
+| J3 | 4-pin local bargraph controller | GND, +5V, SDA_LOCAL, SCL_LOCAL |
+| J4 | 4-pin encoder/button | GND, D2/A, D3/B, D4/SW |
+| J5 | 3-pin NeoPixels | GND, +5V, DATA |
+| J6 | 3-pin theme/vent switches | GND, D5/THEME, D6/VENT |
+
+J2 is the normal operating power source. J1 is retained only for convenient bench/service power and connects to the same board rails.
+
 ## Proposed integration
 
 - Pack-facing link: Nano as an I2C peripheral on the planned shared pack bus; ESP32 is the master. For volume, the Nano sends absolute effective volume 0–100; it does not send encoder deltas or a separate mute flag.
@@ -388,7 +401,9 @@ authoritative pack state, and pack communication remain planned. Integration ref
 - Local HT16K33 driver beside the BL28Z bargraph; a **separate local software I2C bus** is proposed if the Nano hardware I2C interface is used in peripheral mode. Verify library compatibility and timing experimentally.
 - Physical packaging: Nano and power/distribution on the removable base plate; bargraph/driver near the shell window; detachable internal harnesses.
 - Current HasLab wand remains supported. The eventual printed wand may reuse the same *pattern*, subject to bus and timing validation.
-- The proposed 5-pin GX12 loom assigns 5V, GND, SDA, SCL and one spare. **Pin numbering, voltage interface, address and bus pull-ups are not finalized**; do not connect the 5 V Nano I2C interface directly to 3.3 V ESP32 lines without confirming level shifting.
+- The exterior loom supplies **+5V, GND, SDA and SCL** to the attenuator; the existing 5-pin GX12 can retain one spare conductor. The board-facing pack JST is 4-pin in the order GND, +5V, SDA, SCL.
+- A separate 2-pin JST remains on the attenuator board as a **bench/test power input** tied to the same +5V/GND rails. Do not power the attenuator from the pack connector and bench connector at the same time unless an isolation/OR-ing scheme is intentionally added.
+- No pack-bus level shifter is fitted on the attenuator board. With the current 5 V pack Nano, SDA/SCL connect directly. When the pack controller becomes a 3.3 V ESP32, bidirectional level translation for **both SDA and SCL** belongs on the main-controller side so the external accessory bus remains 5 V compatible.
 
 See the top-level [PROJECT.md](../../PROJECT.md) and [PINOUTS.md](../../PINOUTS.md) for the current-versus-planned distinction and verified wiring. Do not reuse the current main pack Nano pin map as the attenuator Nano pin map.
 
