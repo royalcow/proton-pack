@@ -2,6 +2,13 @@
 
 Concise cross-session project changes. This is not a replacement for Git history.
 
+## 2026-10-02 — Attenuator controller-board power/bus layout
+
+- Simplified the planned 5x7 cm attenuator protoboard by removing its pack-I2C level-shifter footprint.
+- Pack-facing 4-pin JST now carries GND, +5V, SDA and SCL; the exterior loom supplies normal operating power and communication.
+- Retained the 2-pin +5V/GND JST as a bench/test power input on the same rails; simultaneous bench and pack power is not supported without isolation.
+- Future ESP32 bidirectional I2C level shifting for both SDA and SCL will live on the main-controller side.
+
 ## 2026-10-02 — Attenuator volume ownership
 
 - Changed V1 architecture so the attenuator Nano owns user-selected master volume (0–100) and handles encoder deltas locally.
