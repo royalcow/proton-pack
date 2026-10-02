@@ -2,6 +2,13 @@
 
 Concise cross-session project changes. This is not a replacement for Git history.
 
+## 2026-10-02 — Attenuator volume ownership
+
+- Changed V1 architecture so the attenuator Nano owns user-selected master volume (0–100) and handles encoder deltas locally.
+- Pack-facing audio control is now absolute effective volume only; the pack does not receive encoder deltas or a separate mute flag.
+- Encoder push remains a local mute convenience: mute sends effective volume 0, preserves local saved volume, and unmute restores/sends the latest saved value.
+- Reconnect/resync sends current effective volume rather than replaying historical input events. Any future second master-volume control requires an explicit ownership/synchronization rule.
+
 ## 2026-10-01 — V2 attenuator vent
 
 - Replaced the linear drain with named buildup, chatter, uneven dump, and residual phases over 1510 ms, using deterministic frame tables in VentAnimation.h.
