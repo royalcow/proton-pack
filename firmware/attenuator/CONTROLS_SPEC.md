@@ -1,33 +1,38 @@
 # Attenuator Controls and Actions — V1
 
-**Status:** PLANNED behavioral specification, agreed 2026-09-25; not implemented.  
-**Local controller:** dedicated Arduino Nano. **Authoritative state and actuation:** main pack controller (future ESP32).  
-**Related:** [LIGHTING_SPEC.md](LIGHTING_SPEC.md) for the three indicator lights and simulated vent/overheat appearance.
+**Status:** PLANNED behavioral specification; local encoder/bargraph behavior is implemented in the standalone prototype, pack communication is not yet implemented.  
+**Local controller:** dedicated Arduino Nano. **Volume authority:** attenuator Nano. **Pack authority:** audio actuation, theme playback, pack-wide vent state, and other pack state.  
+**Related:** [BARGRAPH_SPEC.md](BARGRAPH_SPEC.md) for volume/mute/vent display behavior and [LIGHTING_SPEC.md](LIGHTING_SPEC.md) for the three indicator lights and simulated vent/overheat appearance.
 
 ## Control assignments
 
 | Hardware | V1 function | Attenuator responsibility | Pack responsibility |
 | --- | --- | --- | --- |
-| Rotary encoder, rotation | Master volume up/down | Debounce/decode and report signed relative step delta | Apply volume adjustment to audio subsystem, clamp to supported range, report actual volume |
-| Encoder pushbutton | Toggle mute | Report one debounced press event | Toggle authoritative mute state and report it |
+| Rotary encoder, rotation | Master volume up/down | Debounce/decode, update local selected volume 0–100, update bargraph, send resulting absolute effective volume | Apply received absolute volume to audio subsystem |
+| Encoder pushbutton | Local mute/unmute convenience | Locally save/restore selected volume; while muted send effective volume 0; render mute marker | No separate mute state required; volume 0 means silent |
 | Flat-paddle toggle 1 | Ghostbusters theme play/stop | Report physical switch position and debounced transitions | Start/stop theme playback and report actual music state |
 | Flat-paddle toggle 2 | Manual vent/purge | Report physical switch position and debounced OFF -> ON event | Accept/coordinate pack-wide fictional vent sequence (audio, pack lighting, attenuator state, future optional fog) |
-| Yellow BL28Z 28-segment bargraph + HT16K33 | Volume and temporary effects display | Render locally from acknowledged pack state | Provide actual volume and high-level states/events |
+| Yellow BL28Z 28-segment bargraph + HT16K33 | Volume and temporary effects display | Render locally from attenuator-owned volume/mute state plus pack-reported high-level effects | No per-segment control; provide only pack state needed for temporary effects |
 
-The Nano owns local display updates and inputs. It **does not play the theme, directly activate pack-level vent hardware, or treat a switch position as proof the pack accepted a request**.
+The pack does **not** need to know that the master volume is controlled by a rotary encoder. The attenuator owns that user interaction and sends only the resulting absolute effective volume. Likewise, the encoder pushbutton does not create a pack-facing mute event; at the pack boundary, mute is simply effective volume 0.
 
 ## Encoder hardware wiring status
 
 As of 2026-09-30, the rotary encoder harness is physically soldered and its wire colors are recorded: D2/rotary phase A = **blue** at the top-left outer contact; D3/rotary phase B = **white** at the top-right outer contact; D4/pushbutton signal = **yellow** at the bottom-left contact; GND = **black** from the bottom-right switch contact. The top-center rotary common is locally tied to that bottom-right GND contact. Configure D2/D3/D4 as `INPUT_PULLUP`. The user confirmed correct rotation direction on 2026-09-30 with `ENCODER_DIRECTION = 1` in the standalone sketch.
 
-## Volume and mute
+## Volume and local mute behavior
 
-- Rotation reports an accumulated signed `ENCODER_DELTA` (e.g., `+3`), rather than a stream of independent plus/minus messages. The pack determines step size and clamps the result.
-- Normal bargraph indication reflects **confirmed master volume**, not a guessed local value. V1 proposed logical scale is 0–100, with exact sound hardware and step size TBD.
-- Encoder press emits a single debounced `MUTE_PRESS` / `MUTE_REQUEST` event; the pack returns actual mute status. Do not repeatedly toggle while held.
-- Muting preserves the saved volume so unmute can restore the previous level. The bargraph may briefly indicate mute but should not imply the saved volume is zero.
-- Keep local knob feedback responsive, but reconcile any preview against the pack's authoritative `VOLUME`/`MUTED` snapshot.
-- The exact bargraph segment mapping, mute pattern and temporary sequence animations are to be defined with the real BL28Z/HT16K33 hardware.
+- The attenuator owns the user-selected master-volume value on a logical **0–100** scale.
+- Encoder rotation updates that value locally. The pack receives the resulting **absolute effective volume**, not relative encoder deltas.
+- Normal bargraph indication follows the attenuator's local selected volume immediately; it does not wait for the pack to echo the value back.
+- The pack/audio subsystem applies the absolute value it receives to its actual audio hardware. The exact gain curve remains an audio-subsystem concern.
+- Encoder pushbutton provides a **local mute convenience mode** only. It is useful to remember what value should be restored and to drive the breathing saved-volume marker, but it is not a pack protocol field.
+- Entering local mute preserves the selected/saved volume and sends **effective volume 0** to the pack.
+- While locally muted, encoder rotation changes the saved volume and moves the bargraph marker without making the pack audible; effective volume remains 0.
+- Leaving local mute sends the saved volume as the new effective volume and restores the normal filled-volume display.
+- If the selected volume is intentionally turned to 0 without using the pushbutton, the pack still simply receives volume 0. The pack does not distinguish this from mute.
+- Reconnect/resynchronization sends the current absolute effective volume. There is no encoder-delta replay and no mute-event replay.
+- For V1, the attenuator is the **sole authoritative source for master volume**. If a future service panel, wand, or other control also changes volume, an explicit ownership/synchronization rule must be added rather than silently introducing multiple writers.
 
 ## Theme toggle (physical latching ON/OFF switch)
 
@@ -45,40 +50,43 @@ As of 2026-09-30, the rotary encoder harness is physically soldered and its wire
 - ON -> OFF rearms for the next activation; **it is not an abort command** in V1.
 - Booting/reconnecting with the toggle already ON does **not** auto-vent. Baseline the current position on synchronization and await a new OFF -> ON edge.
 - The Nano does not begin a simulated accepted vent based solely on switch movement: the main pack may accept/reject/defer it depending on actual state. Display pack-reported `VENTING` / `RECOVERY` or other authoritative result.
-- During an accepted vent, the pack coordinates any sound/pack effects and reports state to the attenuator. The local Nano runs the radiation/dome effects in [LIGHTING_SPEC.md](LIGHTING_SPEC.md), with a possible **temporary bargraph animation** that returns to confirmed volume display at the end.
+- During an accepted vent, the pack coordinates any sound/pack effects and reports state to the attenuator. The local Nano runs the radiation/dome effects in [LIGHTING_SPEC.md](LIGHTING_SPEC.md) and the temporary bargraph sequence in [BARGRAPH_SPEC.md](BARGRAPH_SPEC.md), then restores its local volume display.
 - This switch may later trigger N-filter fog through the **pack controller** when that separate feature is built. No fog output or real pressure/thermal protection is part of V1.
-- Exact time profile (buildup, vent, recovery), admissible pack states, sound cue and bargraph effect remain **to be tuned/implemented**, not committed timings.
 
 ## Message semantics (transport/wire format still TBD)
 
-The contemplated bus is main ESP32 as I2C master and attenuator Nano as addressed I2C peripheral. The ESP32 polls input state/events and sends authoritative state; the Nano controls its own HT16K33 on a separate local bus if this topology validates.
+The contemplated bus is main ESP32 as I2C master and attenuator Nano as addressed I2C peripheral. The ESP32 polls/receives user-facing state/actions and sends authoritative pack state; the Nano controls its local HT16K33 independently.
 
-**Attenuator -> pack:** signed encoder delta; debounced mute press; theme physical state and transitions; vent physical state and request edge; optional input snapshot/sequence.  
-**Pack -> attenuator:** authoritative volume, mute, music-playing state, pack state, simulated heat/power, display brightness and accepted vent-state progression.
+**Attenuator -> pack:**
+- absolute **effective volume 0–100**;
+- theme physical state/transitions;
+- vent physical state/request edge;
+- optional input snapshot/sequence metadata.
 
-Because the latching switches encode both **level** and **edge**, do not collapse them into an unqualified `MUSIC_TOGGLE` or `VENT_ACTIVE` flag. Use event sequence IDs and acknowledgement/retry-safe processing for one-shot requests and encoder deltas, so an I2C retry cannot play/vent/toggle twice. Snapshots on startup/reconnect must not replay historical edges. Final wire format, I2C address, command IDs and retry rules are still open.
+**Do not send:** encoder deltas, encoder-button/mute events, saved volume, or a separate `MUTED` field in V1.
+
+**Pack -> attenuator:** music-playing state, pack state, simulated heat/power, display brightness if pack-wide brightness control is retained, accepted vent-state progression, and other high-level pack status needed for local lighting/effects. The pack does not own or echo master volume for normal operation.
+
+Absolute volume updates are intentionally idempotent: receiving `VOLUME=54` twice has the same effect as receiving it once. One-shot theme/vent actions still need retry-safe event handling so an I2C retry cannot trigger them twice. Snapshots on startup/reconnect must not replay historical switch edges.
 
 ## Acceptance scenarios for Codex
 
-1. Turn knob +3/-2: pack applies signed deltas once, then reports the actual bounded volume; bargraph follows it.
-2. Press and hold knob: mute toggles once, then only after release and a new press; previous volume is retained.
-3. Theme OFF -> ON starts once; staying ON does not replay after track end; ON -> OFF requests stop; another OFF -> ON requests a new play.
-4. Vent OFF -> ON requests one vent; remaining ON causes no repeats; OFF rearms but does not abort active vent; next OFF -> ON requests another only if pack accepts it.
-5. At boot or reconnect, either switch found ON causes **no synthetic play/vent event**; physical levels are still reported.
-6. Duplicate polling/retries must not apply a relative delta or edge twice.
-7. Rejected/deferred vent does not falsely show VENTING; an accepted vent transitions the dome/radiation animations via pack-reported states and eventually restores volume display.
-8. Disconnect during use: apply connection behavior from LIGHTING_SPEC; reconnect from a full authoritative state without replaying old requests.
+1. Turn the knob from 50 to 54: attenuator updates its bargraph locally and sends absolute `VOLUME=54`; no encoder delta is required by the pack.
+2. Press and hold the encoder button: local mute toggles once; attenuator preserves saved volume, renders the mute marker, and sends `VOLUME=0` once/statefully as needed. No separate mute message is sent.
+3. Rotate while locally muted: saved volume/marker move, effective pack volume remains 0; unmute sends the latest saved volume.
+4. Turn volume normally to 0: pack receives `VOLUME=0` and treats it identically to silence from local mute.
+5. Disconnect/reconnect after local adjustments: attenuator sends the current absolute effective volume; no historical deltas or mute presses are replayed.
+6. Theme OFF -> ON starts once; staying ON does not replay after track end; ON -> OFF requests stop; another OFF -> ON requests a new play.
+7. Vent OFF -> ON requests one vent; remaining ON causes no repeats; OFF rearms but does not abort active vent.
+8. Rejected/deferred vent does not falsely show VENTING; accepted vent transitions local effects and eventually restores the attenuator-owned volume/mute display.
+9. Duplicate absolute volume delivery is harmless; duplicate one-shot theme/vent events are suppressed by the event protocol.
 
 ## Not decided yet
 
-Final encoder step scale/acceleration, music interruption policy, theme sound hardware, vent timing/sound and bargraph pattern, I2C packet format and pin/address mapping, and future fog actuation. Keep these configurable; do not treat examples as electrically or behaviorally verified implementation.
+Final encoder step scale/acceleration, volume-to-audio gain curve, persistence of saved volume across power cycles, music interruption policy, theme sound hardware, final I2C packet/address/retry encoding, and future fog actuation. Keep these configurable.
 
 ## Standalone simulation exception
 
-The standalone sketch now accepts debounced local toggle edges as simulated
-accepted state: theme drives a synthetic equalizer and vent runs the local bargraph
-animation. This is explicitly a test mode, with no audio, fog, or pack communication.
-Startup edge suppression and OFF-to-ON vent rearming follow the rules above.
-Pin assignment decision (2026-10-01): toggle 1/theme uses Nano D5; toggle 2/vent
-uses Nano D6. Both use `INPUT_PULLUP`, with ON closing to shared GND. Physical
-wiring verification remains pending; see README and PINOUTS.
+The standalone sketch accepts debounced local toggle edges as simulated accepted state: theme drives a synthetic equalizer and vent runs the local bargraph animation. This is explicitly a test mode, with no audio, fog, or pack communication. Startup edge suppression and OFF-to-ON vent rearming follow the rules above.
+
+Pin assignment decision (2026-10-01): toggle 1/theme uses Nano D5; toggle 2/vent uses Nano D6. Both use `INPUT_PULLUP`, with ON closing to shared GND. Physical wiring verification remains pending; see README and PINOUTS.
