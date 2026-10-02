@@ -54,6 +54,21 @@ If clockwise rotation produces the wrong sign, swap the A/B interpretation in fi
 
 These belong to the dedicated attenuator Nano, not the main pack/wand pin map.
 
+### Attenuator pack umbilical and board connectors (decided 2026-10-02)
+
+The attenuator receives both power and pack communication over the exterior loom. The board-facing pack JST is a 4-pin connection carrying **GND, +5V, SDA, SCL**. The existing exterior GX12-5 may retain one unused/spare conductor; only these four signals are required by the attenuator V1 interface.
+
+| Ref | Pins | Purpose | Pin order | Notes |
+|---|---:|---|---|---|
+| J2 | 4 | Pack/exterior loom | 1 GND, 2 +5V, 3 SDA, 4 SCL | Normal operating power + pack I2C |
+| J1 | 2 | Bench/test power | 1 +5V, 2 GND | Service/test input tied to same rails; do not power from J1 and J2 simultaneously unless an isolation/OR-ing scheme is added |
+| J3 | 4 | Local HT16K33/bargraph | 1 GND, 2 +5V, 3 SDA_LOCAL, 4 SCL_LOCAL | Planned local software-I2C bus on A2/A3 |
+| J4 | 4 | Encoder | 1 GND, 2 D2/A, 3 D3/B, 4 D4/SW | Encoder harness colors documented above |
+| J5 | 3 | NeoPixels | 1 GND, 2 +5V, 3 DATA | Planned D7 data; series resistor/bulk capacitor on controller board |
+| J6 | 3 | Two toggles | 1 GND, 2 D5/theme, 3 D6/vent | Active-low with internal pull-ups |
+
+For the current 5 V Nano pack controller, A4/A5 can connect directly across the pack bus. When the main controller migrates to a 3.3 V ESP32, **bidirectional I2C level translation for both SDA and SCL belongs on the main-controller side** so the exterior accessory bus presented to the attenuator remains 5 V compatible. No I2C level-shifter footprint is required on the attenuator protoboard.
+
 ## Wand
 HasLab wand Activate and Fire signals are connected to the controller, with
 common ground. A 4-pin JST connection is available, but its physical pin order,
