@@ -107,14 +107,14 @@ Explore an upgraded audio subsystem supporting:
 ## Attenuator
 ### IN PROGRESS
 - GPStar-based shell and mounting revision V2 are being developed; physical fit tests have calibrated the exterior radiation lens, captive NeoPixel holder and lower dome flange mounts.
-- Separate Arduino Nano will own its encoder, switches, LEDs and yellow BL28Z/HT16K33 bargraph; electronics and final wiring are in progress.
-- Shared pack-facing I2C is PLANNED, not yet electrically validated; the Nano would control its local HT16K33 independently.
+- Separate Arduino Nano owns its encoder, switches, LEDs and yellow BL28Z/HT16K33 bargraph; electronics and final wiring are in progress.
+- Shared pack-facing I2C is PLANNED, not yet electrically validated; the Nano controls its local HT16K33 independently and is the V1 authoritative source for master volume. The pack receives only absolute effective volume (0–100), not encoder deltas or a separate mute flag.
 - Planned control behavior is specified in [`firmware/attenuator/CONTROLS_SPEC.md`](firmware/attenuator/CONTROLS_SPEC.md); lighting behavior in [`firmware/attenuator/LIGHTING_SPEC.md`](firmware/attenuator/LIGHTING_SPEC.md). See [`firmware/attenuator/README.md`](firmware/attenuator/README.md) for architecture and outstanding hardware questions.
 
 - EXPERIMENTAL: standalone Nano/HT16K33/BL28Z display test in `firmware/POC/Attenuator_Bargraph/`; host tests passed; user confirmed physical sequence and basic display commands, with remaining hardware checks documented. Uses local hardware I2C on A4/A5 for this POC only.
 
 Desired functions:
-- Volume encoder and mute button.
+- Volume encoder with local mute convenience; attenuator owns selected volume and sends only effective absolute volume to the pack (mute => volume 0).
 - Flat-paddle toggle 1: Ghostbusters theme play/stop; flat-paddle toggle 2: manual vent/purge (one request per OFF-to-ON transition, rearmed by OFF, no auto-trigger at boot/reconnect).
 - Integration with the future audio subsystem.
 - Removable pack cable/connectors.
