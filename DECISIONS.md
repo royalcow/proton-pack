@@ -42,3 +42,9 @@ Use Nano hardware I2C on A4/A5 for the isolated HT16K33/BL28Z POC. Keep the raw 
 - These assignments leave the encoder on D2/D3, encoder button on D4, and local HT16K33 bus on A4/A5. They do not change the main pack pin map.
 - The standalone sketch simulates accepted theme/vent requests locally. Final pack communication remains unimplemented.
 - Pin assignments are decided and implemented; installed wire colors, switch orientation, continuity, and physical operation remain unverified.
+
+## 2026-10-02 — Attenuator Powered Pack Bus and Level-Shifting Boundary
+- The exterior attenuator connection carries **+5V, GND, SDA and SCL**. The existing GX12-5 may keep one spare conductor; the attenuator controller board uses a 4-pin pack JST for the four active signals.
+- Pack +5V/GND are the normal operating power source for the attenuator board. A separate 2-pin JST is retained as a bench/test power connection tied to the same rails.
+- Do not use pack power and bench power simultaneously unless an explicit isolation/OR-ing circuit is added.
+- The attenuator board does **not** include pack-bus level shifting. Current Nano-to-Nano I2C is direct 5 V logic. On the future ESP32 main controller, bidirectional level translation for both SDA and SCL will be provided on the main-controller side, presenting a 5 V-compatible accessory bus to the attenuator.
